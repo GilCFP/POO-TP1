@@ -52,3 +52,14 @@ class GameSession(models.Model):
     @property
     def net_result(self):
         return self.amount_won - self.amount_bet
+class Game(models.Model):
+    """Model representing a casino game."""
+    
+    name = models.CharField(max_length=100, unique=True)
+
+    
+    class Meta:
+        ordering = ['name']
+        
+    def __str__(self):
+        return self.name
