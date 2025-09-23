@@ -19,8 +19,12 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    # API endpoints
     path('api/produtos/', include('apps.produto.urls')),
     path('api/clientes/', include('apps.cliente.urls')),
     path('api/pedidos/', include('apps.pedido.urls')),
     path('api/restaurante/', include('apps.restaurante.urls')),
+    
+    # Client pages
+    path('pedidos/', include('apps.pedido.urls')),
 ]

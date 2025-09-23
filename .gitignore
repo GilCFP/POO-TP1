@@ -30,3 +30,11 @@ staticfiles/
 
 # Arquivos de segredos e ambiente
 .env
+
+# Frontend
+
+frontend/node_modules/
+
+#Webpack builds
+
+apps/*/static/*/*/*/bundle.js

@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Status do Pedido #{{ pedido.id }}{% endblock %}
+
+{% block content %}
+<!-- Dados para o React -->
+{{ status_data|json_script:"status-data" }}
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+<!-- Container do React -->
+<div id="status-root"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'shared/client/vendor/bundle.js' %}"></script>
+<script src="{% static 'shared/components/bundle.js' %}"></script>
+<script src="{% static 'pedido/client/status/bundle.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Dados para o React -->
+{{ checkout_data|json_script:"checkout-data" }}
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+<!-- Container do React -->
+<div id="checkout-root"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'shared/client/vendor/bundle.js' %}"></script>
+<script src="{% static 'shared/components/bundle.js' %}"></script>
+<script src="{% static 'pedido/client/checkout/bundle.js' %}"></script>
+{% endblock %}

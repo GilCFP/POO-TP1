@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Histórico de Pedidos{% endblock %}
+
+{% block content %}
+<!-- Dados para o React -->
+{{ historico_data|json_script:"historico-data" }}
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+<!-- Container do React -->
+<div id="historico-root"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'shared/client/vendor/bundle.js' %}"></script>
+<script src="{% static 'shared/components/bundle.js' %}"></script>
+<script src="{% static 'pedido/client/historico/bundle.js' %}"></script>
+{% endblock %}

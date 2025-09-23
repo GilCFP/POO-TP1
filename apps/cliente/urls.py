@@ -4,5 +4,5 @@ from . import views
 app_name = 'cliente'
 
 urlpatterns = [
-    # URLs para API de clientes
+    path('', views.cliente_list, name='cliente_list'),
 ]

@@ -1,0 +1,85 @@
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+}
+
+.loading-spinner.center {
+  justify-content: center;
+  min-height: 200px;
+}
+
+.spinner {
+  display: inline-block;
+}
+
+/* Tamanhos */
+.spinner-sm .spinner-border {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.spinner-md .spinner-border {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.spinner-lg .spinner-border {
+  width: 4rem;
+  height: 4rem;
+}
+
+/* Variantes de cor */
+.spinner-primary .spinner-border {
+  border-color: #ff6b35;
+  border-right-color: transparent;
+}
+
+.spinner-secondary .spinner-border {
+  border-color: #6c757d;
+  border-right-color: transparent;
+}
+
+.spinner-white .spinner-border {
+  border-color: white;
+  border-right-color: transparent;
+}
+
+/* Mensagem */
+.loading-message {
+  color: #6c757d;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+/* Animação personalizada */
+@keyframes spinner-border {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner-border {
+  display: inline-block;
+  width: 2rem;
+  height: 2rem;
+  vertical-align: -0.125em;
+  border: 0.25em solid currentcolor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spinner-border 0.75s linear infinite;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}

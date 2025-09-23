@@ -17,12 +17,11 @@ def produto_list(request):
             'price': str(produto.price),
             'description': produto.description,
             'category': produto.category,
-            'preparation_time': produto.preparation_time,
-            'calories': produto.calories,
+            'created_at': produto.created_at.isoformat(),
         })
     return JsonResponse({'produtos': produtos_data})
 
-def produto_detail(request, produto_id):
+def produto_detail(produto_id):
     """Detalhes de um produto específico."""
     produto = get_object_or_404(Produto, id=produto_id)
     produto_data = {
@@ -31,8 +30,6 @@ def produto_detail(request, produto_id):
         'price': str(produto.price),
         'description': produto.description,
         'category': produto.category,
-        'preparation_time': produto.preparation_time,
-        'calories': produto.calories,
         'available': produto.available,
     }
     return JsonResponse({'produto': produto_data})

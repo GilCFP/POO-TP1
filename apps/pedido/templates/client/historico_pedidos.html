@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico de Pedidos - Fast Food</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+        }
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .filter-group label {
+            font-weight: bold;
+            color: #333;
+        }
+        .filter-group select, .filter-group input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .pedido-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            padding: 20px;
+            transition: box-shadow 0.3s;
+        }
+        .pedido-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .pedido-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .pedido-info {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 15px;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-entregue { background-color: #4caf50; }
+        .status-cancelado { background-color: #f44336; }
+        .status-preparando { background-color: #ff9800; }
+        .status-aguardando { background-color: #2196f3; }
+        .status-pronto { background-color: #9c27b0; }
+        .item-summary {
+            color: #666;
+            margin: 10px 0;
+        }
+        .pedido-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            background-color: #ff6b35;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+        }
+        .btn:hover {
+            background-color: #e55a2e;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        .empty-state img {
+            width: 100px;
+            opacity: 0.5;
+            margin-bottom: 20px;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        .pagination a, .pagination span {
+            padding: 8px 12px;
+            text-decoration: none;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .pagination .current {
+            background-color: #ff6b35;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Histórico de Pedidos</h1>
+            <p>Acompanhe todos os seus pedidos realizados</p>
+        </div>
+
+        <div class="filters">
+            <div class="filter-group">
+                <label for="status-filter">Status:</label>
+                <select id="status-filter" name="status">
+                    <option value="">Todos</option>
+                    <option value="6">Entregue</option>
+                    <option value="-1">Cancelado</option>
+                    <option value="3">Preparando</option>
+                    <option value="4">Pronto</option>
+                    <option value="2">Aguardando</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="date-from">Data inicial:</label>
+                <input type="date" id="date-from" name="date_from">
+            </div>
+            <div class="filter-group">
+                <label for="date-to">Data final:</label>
+                <input type="date" id="date-to" name="date_to">
+            </div>
+            <div class="filter-group">
+                <label>&nbsp;</label>
+                <button class="btn btn-small" onclick="aplicarFiltros()">Filtrar</button>
+            </div>
+        </div>
+
+        <div class="pedidos-list">
+            {% if pedidos %}
+                {% for pedido in pedidos %}
+                <div class="pedido-card">
+                    <div class="pedido-header">
+                        <div class="pedido-info">
+                            <div>
+                                <strong>Pedido #{{ pedido.id }}</strong>
+                                <br>
+                                <small>{{ pedido.created_at|date:"d/m/Y H:i" }}</small>
+                            </div>
+                            <div>
+                                <span class="status-badge status-{{ pedido.status|lower }}">
+                                    {{ pedido.get_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                        <div>
+                            <strong>R$ {{ pedido.total_price }}</strong>
+                        </div>
+                    </div>
+
+                    <div class="item-summary">
+                        {% with pedido.itempedido_set.all as items %}
+                            {% if items %}
+                                {{ items|length }} ite{{ items|length|pluralize:"m,ns" }}:
+                                {% for item in items|slice:":3" %}
+                                    {{ item.produto.nome }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                                {% if items|length > 3 %}
+                                    e mais {{ items|length|add:"-3" }} ite{{ items|length|add:"-3"|pluralize:"m,ns" }}
+                                {% endif %}
+                            {% endif %}
+                        {% endwith %}
+                    </div>
+
+                    {% if pedido.delivery_address %}
+                    <div style="color: #666; font-size: 14px; margin: 5px 0;">
+                        📍 {{ pedido.delivery_address|truncatechars:50 }}
+                    </div>
+                    {% endif %}
+
+                    <div class="pedido-actions">
+                        <a href="{% url 'pedido:detalhes' pedido.id %}" class="btn btn-small">Ver Detalhes</a>
+                        {% if pedido.status == '6' %}
+                            <button class="btn btn-secondary btn-small" onclick="repetirPedido({{ pedido.id }})">
+                                Pedir Novamente
+                            </button>
+                            <button class="btn btn-secondary btn-small" onclick="avaliarPedido({{ pedido.id }})">
+                                Avaliar
+                            </button>
+                        {% endif %}
+                        {% if pedido.status in '2,3' %}
+                            <a href="{% url 'pedido:status' pedido.id %}" class="btn btn-small">
+                                Acompanhar
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Paginação -->
+                {% if is_paginated %}
+                <div class="pagination">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1">&laquo; Primeiro</a>
+                        <a href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+                    {% endif %}
+                    
+                    <span class="current">
+                        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                    </span>
+                    
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}">Próximo</a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}">Último &raquo;</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+            {% else %}
+                <div class="empty-state">
+                    <div style="font-size: 48px; margin-bottom: 20px;">🍽️</div>
+                    <h3>Nenhum pedido encontrado</h3>
+                    <p>Você ainda não fez nenhum pedido ou não há pedidos que correspondam aos filtros aplicados.</p>
+                    <a href="{% url 'produto:cardapio' %}" class="btn">Fazer Primeiro Pedido</a>
+                </div>
+            {% endif %}
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="{% url 'produto:cardapio' %}" class="btn">Fazer Novo Pedido</a>
+            <a href="{% url 'pedido:status' %}" class="btn btn-secondary">Status Atual</a>
+        </div>
+    </div>
+
+    <script>
+        function aplicarFiltros() {
+            const status = document.getElementById('status-filter').value;
+            const dateFrom = document.getElementById('date-from').value;
+            const dateTo = document.getElementById('date-to').value;
+            
+            const params = new URLSearchParams(window.location.search);
+            
+            if (status) params.set('status', status);
+            else params.delete('status');
+            
+            if (dateFrom) params.set('date_from', dateFrom);
+            else params.delete('date_from');
+            
+            if (dateTo) params.set('date_to', dateTo);
+            else params.delete('date_to');
+            
+            window.location.search = params.toString();
+        }
+
+        function repetirPedido(pedidoId) {
+            if (confirm('Deseja adicionar os itens deste pedido ao carrinho?')) {
+                // Implementar lógica para repetir pedido
+                alert('Funcionalidade de repetir pedido será implementada');
+            }
+        }
+
+        function avaliarPedido(pedidoId) {
+            // Implementar modal de avaliação ou redirecionamento
+            alert('Funcionalidade de avaliação será implementada');
+        }
+
+        // Carregar filtros da URL
+        window.onload = function() {
+            const params = new URLSearchParams(window.location.search);
+            
+            if (params.get('status')) {
+                document.getElementById('status-filter').value = params.get('status');
+            }
+            if (params.get('date_from')) {
+                document.getElementById('date-from').value = params.get('date_from');
+            }
+            if (params.get('date_to')) {
+                document.getElementById('date-to').value = params.get('date_to');
+            }
+        }
+    </script>
+</body>
+</html>
