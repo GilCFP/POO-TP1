@@ -37,7 +37,18 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'produto.apps.ProdutoConfig',
+    
+    # Apps locais organizados por domínio
+    'apps.core',
+    'apps.produto',
+    'apps.cliente',
+    'apps.pedido',
+    'apps.restaurante',
+    
+    # Apps de terceiros (futuro)
+    # 'rest_framework',
+    # 'corsheaders',
+    # 'channels',
 ]
 
 MIDDLEWARE = [
