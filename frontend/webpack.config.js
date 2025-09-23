@@ -11,23 +11,28 @@ module.exports = {
     'pedido/client/checkout': './src/apps/pedido/client/checkout/index.js',
     'pedido/client/status': './src/apps/pedido/client/status/index.js',
     'pedido/client/historico': './src/apps/pedido/client/historico/index.js',
+    
+    // === CLIENTE APP ===
+    // Client scope
+    'cliente/client/auth': './src/apps/cliente/client/auth/index.js',
+    'cliente/client/register': './src/apps/cliente/client/auth/register.js',
   },
   
   output: {
-    path: path.resolve(__dirname, '../'),
+    path: path.resolve(__dirname, '../static'),
     filename: (pathData) => {
       const parts = pathData.chunk.name.split('/');
       if (parts.length === 3) {
-        // Ex: pedido/client/checkout -> apps/pedido/static/pedido/client/checkout/bundle.js
+        // Ex: pedido/client/checkout -> pedido/client/checkout/bundle.js
         const [app, scope, page] = parts;
-        return `apps/${app}/static/${scope}/${page}/bundle.js`;
+        return `${app}/${scope}/${page}/bundle.js`;
       } else if (parts.length === 2) {
-        // Ex: shared/client/vendor -> apps/shared/static/shared/client/vendor/bundle.js
-        const [app, type] = parts;
-        return `apps/${app}/static/${type}/bundle.js`;
+        // Ex: shared/client/vendor -> shared/client/vendor/bundle.js
+        const [category, type] = parts;
+        return `${category}/${type}/bundle.js`;
       }
       // Fallback
-      return `apps/${pathData.chunk.name}/bundle.js`;
+      return `${pathData.chunk.name}/bundle.js`;
     },
     clean: false,
     publicPath: '/static/',

@@ -167,17 +167,37 @@ class ApiService {
   };
 
   cliente = {
-    getProfile: () => 
-      this.get('/cliente/profile/'),
+    // Autenticação
+    login: (cpf, password, csrfToken) => 
+      this.post('/clientes/api/login/', { cpf, password }, csrfToken),
+    
+    logout: (csrfToken) => 
+      this.post('/clientes/api/logout/', {}, csrfToken),
+    
+    createTemporary: (cpf, name, phone, csrfToken) => 
+      this.post('/clientes/api/create-temporary/', { cpf, name, phone }, csrfToken),
+    
+    createPermanent: (data, csrfToken) => 
+      this.post('/clientes/api/create-permanent/', data, csrfToken),
+    
+    convertToPermanent: (email, password, csrfToken) => 
+      this.post('/clientes/api/convert-permanent/', { email, password }, csrfToken),
+    
+    // Perfil
+    getCurrentClient: () => 
+      this.get('/clientes/api/current/'),
     
     updateProfile: (data, csrfToken) => 
-      this.put('/cliente/profile/', data, csrfToken),
+      this.put('/clientes/api/profile/update/', data, csrfToken),
+    
+    getProfile: () => 
+      this.get('/clientes/api/profile/'),
     
     getEnderecos: () => 
-      this.get('/cliente/enderecos/'),
+      this.get('/clientes/api/enderecos/'),
     
     addEndereco: (endereco, csrfToken) => 
-      this.post('/cliente/enderecos/', endereco, csrfToken),
+      this.post('/clientes/api/enderecos/', endereco, csrfToken),
   };
 }
 
@@ -205,4 +225,55 @@ export const formatDate = (dateString) => {
     hour: '2-digit',
     minute: '2-digit'
   }).format(new Date(dateString));
+};
+
+// Utilitários de autenticação
+export const AuthUtils = {
+  // Armazena dados do cliente logado
+  setClientData: (clientData) => {
+    localStorage.setItem('client_data', JSON.stringify(clientData));
+  },
+  
+  // Recupera dados do cliente logado
+  getClientData: () => {
+    const data = localStorage.getItem('client_data');
+    return data ? JSON.parse(data) : null;
+  },
+  
+  // Remove dados do cliente (logout)
+  clearClientData: () => {
+    localStorage.removeItem('client_data');
+  },
+  
+  // Verifica se cliente está logado
+  isAuthenticated: () => {
+    const clientData = AuthUtils.getClientData();
+    return clientData && clientData.success;
+  },
+  
+  // Obtém informações do cliente atual
+  getCurrentClient: () => {
+    const clientData = AuthUtils.getClientData();
+    return clientData && clientData.data ? clientData.data.client : null;
+  },
+  
+  // Verifica se é conta temporária
+  isTemporaryAccount: () => {
+    const clientData = AuthUtils.getClientData();
+    return clientData && clientData.data && clientData.data.session 
+      ? clientData.data.session.type === 'temporary' 
+      : false;
+  },
+  
+  // Formata CPF para exibição
+  formatCPF: (cpf) => {
+    if (!cpf) return '';
+    const cleanCPF = cpf.replace(/\D/g, '');
+    return cleanCPF.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+  },
+  
+  // Remove formatação do CPF
+  cleanCPF: (cpf) => {
+    return cpf ? cpf.replace(/\D/g, '') : '';
+  }
 };

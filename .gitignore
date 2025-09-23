@@ -37,4 +37,6 @@ frontend/node_modules/
 
 #Webpack builds
 
-apps/*/static/*/*/*/bundle.js
+apps/*/static/**/bundle.js
+
+static/*

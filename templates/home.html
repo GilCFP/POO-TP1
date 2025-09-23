@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fast Food - Home</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background-color: #007bff;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .nav-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 30px 0;
+        }
+        .btn {
+            padding: 15px 30px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>🍔 Fast Food App</h1>
+        <p>Sistema de Pedidos Online</p>
+    </header>
+
+    <div class="container">
+        <h2>Bem-vindo ao Fast Food!</h2>
+        <p>Faça seus pedidos de forma rápida e prática.</p>
+        
+        <div class="nav-buttons">
+            <a href="/clientes/login/" class="btn">Fazer Login</a>
+            <a href="/clientes/register/" class="btn btn-secondary">Criar Conta</a>
+            <a href="/pedidos/checkout/" class="btn">Fazer Pedido</a>
+        </div>
+        
+        <h3>Como funciona:</h3>
+        <ol>
+            <li><strong>Faça login</strong> ou crie uma conta temporária</li>
+            <li><strong>Escolha seus produtos</strong> no cardápio</li>
+            <li><strong>Finalize o pedido</strong> no checkout</li>
+            <li><strong>Acompanhe</strong> o status do seu pedido</li>
+        </ol>
+    </div>
+</body>
+</html>
