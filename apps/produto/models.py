@@ -76,14 +76,15 @@ class Alimento(Produto):
         verbose_name="É um ingrediente?",
         help_text="Marque se este alimento pode ser usado como ingrediente em outros."
     )
-    additional_ingredients = models.ManyToManyField(
-        'self',
-        blank=True,
-        symmetrical=False,
-        verbose_name="Ingredientes Adicionais",
-        limit_choices_to={'is_ingredient': True},
-        related_name="used_in_foods"
-    )
+    # TODO: Implementar ingredientes adicionais em versão futura
+    # additional_ingredients = models.ManyToManyField(
+    #     'self',
+    #     blank=True,
+    #     symmetrical=False,
+    #     verbose_name="Ingredientes Adicionais",
+    #     limit_choices_to={'is_ingredient': True},
+    #     related_name="used_in_foods"
+    # )
 
     def is_expired(self):
         """Verifica se o alimento está vencido."""
@@ -247,112 +248,23 @@ class ComboItem(TimeStampedModel):
 # Adicionaremos via migration depois
 from django.db import models as django_models
 
-def add_cliente_relation():
-    """Função para adicionar relacionamento com Cliente após criação dos apps."""
-    try:
-        from apps.cliente.models import Cliente
-        
-        # Adicionar ManyToMany para restrições alimentares
-        Cliente.add_to_class(
-            'alimentary_restrictions',
-            models.ManyToManyField(
-                RestricaoAlimentar,
-                blank=True,
-                verbose_name="Restrições Alimentares",
-                related_name="clientes"
-            )
-        )
-    except ImportError:
-        pass  # App cliente ainda não existe
-
-class RestricaoAlimentar(models.Model):
-    """Representa uma restrição alimentar, como 'Glúten' ou 'Lactose'."""
-    name = models.CharField(max_length=100, unique=True, verbose_name="Nome")
-
-    class Meta:
-        verbose_name = "Restrição Alimentar"
-        verbose_name_plural = "Restrições Alimentares"
-
-    def __str__(self):
-        return self.name
-
-class Alimento(Produto):
-    """
-    Representa um alimento, que é um tipo de Produto com detalhes adicionais.
-    Herda de Produto usando herança multi-tabela do Django.
-    """
-    expiration_date = models.DateField(verbose_name="Data de Validade")
-    calories = models.PositiveIntegerField(verbose_name="Calorias")
-    time_to_prepare = models.PositiveIntegerField(
-        default=0,
-        verbose_name="Tempo de Preparo",
-        help_text="Tempo em minutos"
-    )
-    alimentary_restrictions = models.ManyToManyField(
-        RestricaoAlimentar,
-        blank=True,
-        verbose_name="Restrições Alimentares"
-    )
-    is_ingredient = models.BooleanField(
-        default=False,
-        verbose_name="É um ingrediente?",
-        help_text="Marque se este alimento pode ser usado como ingrediente em outros."
-    )
-    additional_ingredients = models.ManyToManyField(
-        'self',
-        blank=True,
-        symmetrical=False,
-        verbose_name="Ingredientes Adicionais",
-        limit_choices_to={'is_ingredient': True}
-    )
-
-    def is_expired(self):
-        """Verifica se o alimento está vencido."""
-        return date.today() > self.expiration_date
-    is_expired.boolean = True
-    is_expired.short_description = 'Vencido?'
-
-
-class Combo(Produto):
-    """
-    Representa um combo, que é um Produto composto por outros Produtos.
-    Herda de Produto e usa uma relação ManyToManyField para os itens.
-    """
-    items = models.ManyToManyField(
-        Produto,
-        related_name="member_of_combos",
-        verbose_name="Itens do Combo"
-    )
-
-    @property
-    def calculated_price(self):
-        """Calcula o preço somando o valor de todos os itens."""
-        if not self.pk:
-            return Decimal('0.00')
-        return self.items.aggregate(total=models.Sum('price'))['total'] or Decimal('0.00')
-
-    def get_time_to_prepare(self):
-        """
-        Calcula o tempo total de preparo somando o tempo dos itens que são Alimentos.
-        """
-        total_time = 0
-        for produto in self.items.select_related('alimento'):
-            # hasattr verifica se o produto tem um 'alimento' relacionado (ou seja, se é um Alimento)
-            if hasattr(produto, 'alimento'):
-                total_time += produto.alimento.time_to_prepare
-        return total_time
-    get_time_to_prepare.short_description = "Tempo de Preparo (min)"
-
-
-class StatusPedido(models.TextChoices):
-    """Representa os diferentes status que um pedido pode ter."""
-    CANCELED = '-1', 'Cancelado'
-    ORDERING = '0', 'Fazendo pedido'
-    PENDING_PAYMENT = '1', 'Aguardando pagamento'
-    WAITING = '2', 'Aguardando'
-    PREPARING = '3', 'Preparando'
-    READY = '4', 'Pronto'
-    BEING_DELIVERED = '5', 'Sendo entregue'
-    DELIVERED = '6', 'Entregue'
+# Função para adicionar relacionamento com Cliente em versão futura
+# def add_cliente_relation():
+#     """Função para adicionar relacionamento com Cliente após criação dos apps."""
+#     try:
+#         from apps.cliente.models import Cliente
+#         
+#         # Adicionar ManyToMany para restrições alimentares
+#         Cliente.add_to_class(
+#             'alimentary_restrictions',
+#             models.ManyToManyField(
+#                 RestricaoAlimentar,
+#                 blank=True,
+#                 verbose_name="Restrições Alimentares",
+#                 related_name="clientes"
+#             )
+#         )
+#     except ImportError:
+#         pass  # App cliente ainda não existe
 
 
