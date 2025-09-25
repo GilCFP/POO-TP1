@@ -16,6 +16,10 @@ module.exports = {
     // Client scope
     'cliente/client/auth': './src/apps/cliente/client/auth/index.js',
     'cliente/client/register': './src/apps/cliente/client/auth/register.js',
+
+    // === PRODUTO APP ===
+    // Client scope
+    'produto/client/cardapio': './src/apps/produto/client/cardapio/index.js',
   },
   
   output: {
@@ -25,11 +29,11 @@ module.exports = {
       if (parts.length === 3) {
         // Ex: pedido/client/checkout -> pedido/client/checkout/bundle.js
         const [app, scope, page] = parts;
-        return `${app}/${scope}/${page}/bundle.js`;
+        return `${app}/${scope}/${page}.bundle.js`;
       } else if (parts.length === 2) {
         // Ex: shared/client/vendor -> shared/client/vendor/bundle.js
         const [category, type] = parts;
-        return `${category}/${type}/bundle.js`;
+        return `${category}/${type}.bundle.js`;
       }
       // Fallback
       return `${pathData.chunk.name}/bundle.js`;

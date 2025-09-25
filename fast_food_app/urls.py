@@ -24,11 +24,12 @@ urlpatterns = [
     path('', TemplateView.as_view(template_name='home.html'), name='home'),
     
     # API endpoints
-    path('api/produtos/', include('apps.produto.urls')),
+    # As URLs da API de produtos agora estão dentro de 'apps.produto.urls' com prefixo 'api/'
     path('clientes/', include('apps.cliente.urls')),
     path('api/pedidos/', include('apps.pedido.urls')),
     path('api/restaurante/', include('apps.restaurante.urls')),
     
     # Client pages
+    path('produtos/', include('apps.produto.urls')),
     path('pedidos/', include('apps.pedido.urls')),
 ]

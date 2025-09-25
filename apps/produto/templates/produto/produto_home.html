@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Cardápio - Nosso Restaurante{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <header class="text-center mb-5">
+        <h1>Nosso Cardápio</h1>
+        <p class="lead">Explore nossas deliciosas opções!</p>
+    </header>
+
+    {#
+      Os dados dos produtos são passados para o frontend via um script JSON.
+      O React (ou outro framework JS) pode ler esses dados para renderizar a página.
+    #}
+    {{ produtos_data|json_script:"produtos-data" }}
+
+    {#
+      Este é o container onde a aplicação React será montada.
+      O JavaScript buscará este elemento pelo ID para iniciar a renderização.
+    #}
+    <div id="cardapio-root">
+        <!-- O conteúdo do cardápio será renderizado aqui pelo React -->
+        <p>Carregando cardápio...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    {# Carrega o bundle de bibliotecas compartilhadas (vendor) primeiro #}
+    <script src="{% static 'shared/client/vendor.bundle.js' %}"></script>
+    {# Em seguida, carrega o bundle específico da página do cardápio #}
+    <script src="{% static 'produto/client/cardapio.bundle.js' %}"></script>
+{% endblock %}
