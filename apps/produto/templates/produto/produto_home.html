@@ -9,19 +9,8 @@
         <h1>Nosso Cardápio</h1>
         <p class="lead">Explore nossas deliciosas opções!</p>
     </header>
-
-    {#
-      Os dados dos produtos são passados para o frontend via um script JSON.
-      O React (ou outro framework JS) pode ler esses dados para renderizar a página.
-    #}
     {{ produtos_data|json_script:"produtos-data" }}
-
-    {#
-      Este é o container onde a aplicação React será montada.
-      O JavaScript buscará este elemento pelo ID para iniciar a renderização.
-    #}
     <div id="cardapio-root">
-        <!-- O conteúdo do cardápio será renderizado aqui pelo React -->
         <p>Carregando cardápio...</p>
     </div>
 </div>
