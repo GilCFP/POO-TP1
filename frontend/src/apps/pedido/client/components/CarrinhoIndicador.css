@@ -1,0 +1,207 @@
+/* Carrinho Indicador Styles */
+.carrinho-indicador {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  animation: slideUp 0.3s ease-out;
+}
+
+.carrinho-indicador-button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #ff6b35 0%, #ff8e53 100%);
+  color: white;
+  border: none;
+  border-radius: 25px;
+  padding: 12px 20px;
+  box-shadow: 0 4px 20px rgba(255, 107, 53, 0.4);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: 600;
+  min-height: 50px;
+}
+
+.carrinho-indicador-button:hover {
+  background: linear-gradient(135deg, #e55a2b 0%, #ff7a47 100%);
+  box-shadow: 0 6px 25px rgba(255, 107, 53, 0.5);
+  transform: translateY(-2px);
+}
+
+.carrinho-indicador-button:active {
+  transform: translateY(0);
+}
+
+.carrinho-icon {
+  position: relative;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.item-count {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #dc3545;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.carrinho-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.carrinho-label {
+  font-size: 13px;
+  opacity: 0.9;
+  line-height: 1;
+}
+
+.carrinho-total {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.carrinho-arrow {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+/* Animações */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    transform: translateX(-50%) scale(1.05);
+  }
+}
+
+.carrinho-indicador.pulse {
+  animation: pulse 0.6s ease-in-out;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .carrinho-indicador {
+    bottom: 15px;
+    left: 10px;
+    right: 10px;
+    transform: none;
+  }
+  
+  .carrinho-indicador-button {
+    width: 100%;
+    justify-content: space-between;
+    padding: 15px 20px;
+    border-radius: 15px;
+  }
+  
+  .carrinho-info {
+    flex: 1;
+    align-items: center;
+  }
+  
+  .carrinho-label {
+    font-size: 14px;
+  }
+  
+  .carrinho-total {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .carrinho-indicador {
+    bottom: 10px;
+    left: 8px;
+    right: 8px;
+  }
+  
+  .carrinho-indicador-button {
+    padding: 12px 16px;
+    gap: 10px;
+  }
+  
+  .carrinho-icon {
+    font-size: 16px;
+  }
+  
+  .item-count {
+    min-width: 16px;
+    height: 16px;
+    font-size: 10px;
+    top: -6px;
+    right: -6px;
+  }
+}
+
+/* Variantes de tema */
+.carrinho-indicador.theme-dark .carrinho-indicador-button {
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+  box-shadow: 0 4px 20px rgba(44, 62, 80, 0.4);
+}
+
+.carrinho-indicador.theme-dark .carrinho-indicador-button:hover {
+  background: linear-gradient(135deg, #1a252f 0%, #2c3e50 100%);
+  box-shadow: 0 6px 25px rgba(44, 62, 80, 0.5);
+}
+
+/* Estados especiais */
+.carrinho-indicador.loading .carrinho-indicador-button {
+  background: linear-gradient(135deg, #95a5a6 0%, #bdc3c7 100%);
+  cursor: not-allowed;
+}
+
+.carrinho-indicador.error .carrinho-indicador-button {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+}
+
+/* Acessibilidade */
+.carrinho-indicador-button:focus {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carrinho-indicador {
+    animation: none;
+  }
+  
+  .carrinho-indicador.pulse {
+    animation: none;
+  }
+  
+  .carrinho-indicador-button {
+    transition: none;
+  }
+}

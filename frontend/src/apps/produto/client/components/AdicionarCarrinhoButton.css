@@ -1,0 +1,164 @@
+/* Adicionar Carrinho Button Styles */
+.adicionar-carrinho-container {
+  margin: 10px 0;
+}
+
+.adicionar-carrinho-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #ff6b35 0%, #ff8e53 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
+  min-height: 44px;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.adicionar-carrinho-btn:hover:not(.disabled):not(.loading) {
+  background: linear-gradient(135deg, #e55a2b 0%, #ff7a47 100%);
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.4);
+  transform: translateY(-2px);
+}
+
+.adicionar-carrinho-btn:active:not(.disabled):not(.loading) {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(255, 107, 53, 0.3);
+}
+
+.adicionar-carrinho-btn.loading {
+  background: linear-gradient(135deg, #cccccc 0%, #e6e6e6 100%);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.adicionar-carrinho-btn.disabled {
+  background: linear-gradient(135deg, #999999 0%, #bbbbbb 100%);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.adicionar-carrinho-btn.success {
+  background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
+.adicionar-carrinho-btn.error {
+  background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+}
+
+.button-text {
+  flex: 1;
+  text-align: center;
+}
+
+/* Loading Spinner Integration */
+.adicionar-carrinho-btn .loading-spinner {
+  margin-right: 8px;
+}
+
+/* Feedback Message */
+.feedback-message {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  text-align: center;
+  opacity: 0;
+  animation: fadeIn 0.3s ease forwards;
+}
+
+.feedback-message.success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.feedback-message.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .adicionar-carrinho-btn {
+    font-size: 16px;
+    padding: 14px 16px;
+    min-height: 48px;
+  }
+}
+
+/* Variante compacta */
+.adicionar-carrinho-btn.compact {
+  padding: 8px 16px;
+  font-size: 13px;
+  min-height: 36px;
+}
+
+/* Variante com ícone */
+.adicionar-carrinho-btn .icon {
+  font-size: 16px;
+}
+
+/* Estados especiais para integração com carrinho */
+.adicionar-carrinho-btn.no-carrinho {
+  background: linear-gradient(135deg, #6c757d 0%, #868e96 100%);
+}
+
+.adicionar-carrinho-btn.no-carrinho:hover:not(.disabled):not(.loading) {
+  background: linear-gradient(135deg, #5a6268 0%, #727b84 100%);
+}
+
+/* Animação de pulse para chamar atenção */
+.adicionar-carrinho-btn.pulse {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
+  }
+  50% {
+    box-shadow: 0 4px 16px rgba(255, 107, 53, 0.6);
+  }
+  100% {
+    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .feedback-message.success {
+    background-color: rgba(40, 167, 69, 0.2);
+    color: #4caf50;
+    border-color: rgba(40, 167, 69, 0.3);
+  }
+
+  .feedback-message.error {
+    background-color: rgba(220, 53, 69, 0.2);
+    color: #f44336;
+    border-color: rgba(220, 53, 69, 0.3);
+  }
+}

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { apiService } from '@shared/services/api';
+import { pedidoService } from '../services/pedidoService';
 
 /**
  * Hook personalizado para gerenciar estado e ações do checkout
@@ -15,20 +15,31 @@ export const useCheckout = (initialPedido, csrfToken) => {
   /**
    * Atualiza quantidade de um item
    */
-  const updateQuantity = useCallback(async (itemId, newQuantity) => {
-    if (newQuantity < 1) return;
+  const updateQuantity = useCallback(async (produtoId, newQuantity) => {
+    if (newQuantity < 1 || !pedido) return;
 
     setLoading(true);
     setError(null);
 
     try {
-      const response = await apiService.post('/pedido/update-item/', {
-        item_id: itemId,
-        quantity: newQuantity
-      }, csrfToken);
+      const getCSRFToken = () => {
+        const token = document.querySelector('[name=csrfmiddlewaretoken]');
+        return token ? token.value : csrfToken;
+      };
+
+      const response = await pedidoService.atualizarQuantidadeItem(
+        pedido.id,
+        produtoId,
+        newQuantidade,
+        getCSRFToken()
+      );
 
       if (response.success) {
-        setPedido(response.pedido);
+        // Recarregar dados do pedido
+        const pedidoAtualizado = await pedidoService.obterPedido(pedido.id);
+        if (pedidoAtualizado.success) {
+          setPedido(pedidoAtualizado.pedido);
+        }
       } else {
         throw new Error(response.error || 'Erro ao atualizar quantidade');
       }
@@ -38,22 +49,35 @@ export const useCheckout = (initialPedido, csrfToken) => {
     } finally {
       setLoading(false);
     }
-  }, [csrfToken]);
+  }, [pedido, csrfToken]);
 
   /**
    * Remove item do pedido
    */
-  const removeItem = useCallback(async (itemId) => {
+  const removeItem = useCallback(async (produtoId) => {
+    if (!pedido) return;
+
     setLoading(true);
     setError(null);
 
     try {
-      const response = await apiService.post('/pedido/remove-item/', {
-        item_id: itemId
-      }, csrfToken);
+      const getCSRFToken = () => {
+        const token = document.querySelector('[name=csrfmiddlewaretoken]');
+        return token ? token.value : csrfToken;
+      };
+
+      const response = await pedidoService.removerItem(
+        pedido.id,
+        produtoId,
+        getCSRFToken()
+      );
 
       if (response.success) {
-        setPedido(response.pedido);
+        // Recarregar dados do pedido
+        const pedidoAtualizado = await pedidoService.obterPedido(pedido.id);
+        if (pedidoAtualizado.success) {
+          setPedido(pedidoAtualizado.pedido);
+        }
       } else {
         throw new Error(response.error || 'Erro ao remover item');
       }
@@ -63,34 +87,45 @@ export const useCheckout = (initialPedido, csrfToken) => {
     } finally {
       setLoading(false);
     }
-  }, [csrfToken]);
+  }, [pedido, csrfToken]);
 
   /**
    * Finaliza o pedido
    */
   const finalizarPedido = useCallback(async (formData) => {
+    if (!pedido) return;
+
     setLoading(true);
     setError(null);
 
     try {
-      // Adiciona dados do estado ao FormData
-      formData.append('delivery_type', deliveryType);
-      formData.append('payment_method', paymentMethod);
-      formData.append('selected_address', selectedAddress);
-      formData.append('csrfmiddlewaretoken', csrfToken);
+      const getCSRFToken = () => {
+        const token = document.querySelector('[name=csrfmiddlewaretoken]');
+        return token ? token.value : csrfToken;
+      };
 
-      const response = await fetch('/pedido/finalizar/', {
-        method: 'POST',
-        body: formData
-      });
+      // Primeiro finaliza o pedido (muda para aguardando pagamento)
+      const finalizeResponse = await pedidoService.finalizarPedido(
+        pedido.id,
+        getCSRFToken()
+      );
 
-      if (response.ok) {
-        // Sucesso - redireciona para confirmação
-        const data = await response.json();
-        window.location.href = data.redirect_url || '/pedido/confirmacao/';
+      if (!finalizeResponse.success) {
+        throw new Error(finalizeResponse.error || 'Erro ao finalizar pedido');
+      }
+
+      // Depois processa o pagamento
+      const paymentResponse = await pedidoService.processarPagamento(
+        pedido.id,
+        paymentMethod,
+        getCSRFToken()
+      );
+
+      if (paymentResponse.success) {
+        // Sucesso - redireciona para status do pedido
+        window.location.href = `/pedido/${pedido.id}/status/`;
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erro ao processar pedido');
+        throw new Error(paymentResponse.error || 'Erro ao processar pagamento');
       }
     } catch (err) {
       setError(err.message);
@@ -98,7 +133,7 @@ export const useCheckout = (initialPedido, csrfToken) => {
     } finally {
       setLoading(false);
     }
-  }, [deliveryType, paymentMethod, selectedAddress, csrfToken]);
+  }, [pedido, deliveryType, paymentMethod, selectedAddress, csrfToken]);
 
   return {
     // Estado
