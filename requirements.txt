@@ -1,0 +1,28 @@
+# ==============================================================================
+# Requisitos do Projeto Python - POO-TP1
+#
+# Para instalar todas as dependências, execute no seu terminal:
+# pip install -r requirements.txt
+# ==============================================================================
+
+# --- Core Framework ---
+# O coração do seu backend. Usando uma versão LTS (Long-Term Support) para estabilidade.
+Django~=4.2.7
+
+# --- API & REST Framework ---
+# Essencial para criar APIs RESTful de forma robusta, como sugerido na sua arquitetura.
+# djangorestframework~=3.14.0
+
+# --- Cross-Origin Resource Sharing (CORS) ---
+# Necessário para permitir que seu frontend (ex: localhost:8080) se comunique
+# com sua API Django (ex: localhost:8000) durante o desenvolvimento.
+django-cors-headers~=4.3.1
+
+# --- Servidor de Aplicação WSGI ---
+# Servidor padrão para deploy de aplicações Django em produção (não usado com 'runserver').
+gunicorn~=21.2.0
+
+# --- Driver de Banco de Dados (Exemplo) ---
+# Descomente a linha correspondente ao banco de dados que você vai usar.
+# psycopg2-binary~=2.9.9  # Para PostgreSQL
+# mysqlclient~=2.2.1     # Para MySQL
