@@ -1,5 +1,6 @@
 import { useState, useCallback, useContext, createContext } from 'react';
 import { pedidoService } from '../services/pedidoService';
+import { AuthUtils } from '@shared/services/api';
 
 /**
  * Context para compartilhar estado do carrinho entre componentes
@@ -79,6 +80,19 @@ export const useCarrinho = () => {
     try {
       setLoading(true);
       setError(null);
+
+      // Verifica se usuário está autenticado
+      const isAuthenticated = AuthUtils.isAuthenticated();
+      if (!isAuthenticated) {
+        // Redireciona para login
+        const currentUrl = window.location.pathname;
+        window.location.href = `/clientes/login/?next=${encodeURIComponent(currentUrl)}`;
+        return {
+          success: false,
+          error: 'É necessário fazer login para adicionar produtos ao carrinho',
+          redirect: true
+        };
+      }
 
       // Obtém ou cria pedido ativo
       let pedido = pedidoAtivo;

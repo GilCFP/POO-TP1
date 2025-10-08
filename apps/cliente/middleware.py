@@ -57,16 +57,21 @@ class ClienteAuthMiddleware(MiddlewareMixin):
     def process_view(self, request, view_func, view_args, view_kwargs):
         """Verifica autenticação antes da view."""
         
-        # URLs que exigem autenticação
-        protected_paths = [
-            '/pedidos/',
-            '/api/pedidos/',
+        # Verifica se a URL está isenta de autenticação
+        if any(request.path.startswith(url) for url in self.EXEMPT_URLS):
+            return None
+        
+        # URLs que exigem autenticação de cliente
+        client_protected_paths = [
+            '/pedidos/',           # Páginas de pedidos
+            '/api/pedidos/',       # API de pedidos  
+            '/clientes/profile/',  # Perfil do cliente
         ]
         
-        # Verifica se precisa de autenticação
-        needs_auth = any(request.path.startswith(path) for path in protected_paths)
+        # Verifica se precisa de autenticação de cliente
+        needs_client_auth = any(request.path.startswith(path) for path in client_protected_paths)
         
-        if needs_auth and not getattr(request, 'is_client_authenticated', False):
+        if needs_client_auth and not getattr(request, 'is_client_authenticated', False):
             if request.content_type == 'application/json' or request.path.startswith('/api/'):
                 return JsonResponse({
                     'error': 'Autenticação requerida',
