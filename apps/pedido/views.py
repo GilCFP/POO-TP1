@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from .models import Pedido, StatusPedido
 from apps.cliente.models import Cliente
@@ -127,11 +128,23 @@ def historico_view(request):
 @require_http_methods(["POST"])
 def criar_pedido(request):
     """View para criar um novo pedido."""
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    # Debug: log da requisição
+    logger.info(f"Criando pedido - Headers: {dict(request.headers)}")
+    logger.info(f"Criando pedido - Content-Type: {request.content_type}")
+    logger.info(f"Criando pedido - CSRF Token: {request.META.get('HTTP_X_CSRFTOKEN', 'Não encontrado')}")
+    logger.info(f"Criando pedido - Cliente autenticado: {getattr(request, 'is_client_authenticated', False)}")
+    
     try:
+        # Parse do JSON body
+        data = json.loads(request.body)
+        logger.info(f"Dados recebidos: {data}")
+        
         # Verificar se cliente está autenticado
         if not getattr(request, 'is_client_authenticated', False):
             # Alternativa: obter client_id do body do request
-            data = json.loads(request.body)
             client_id = data.get('client_id')
             
             if not client_id:
@@ -143,6 +156,7 @@ def criar_pedido(request):
             # Buscar cliente pelo ID
             try:
                 client = Cliente.objects.get(id=client_id, is_active=True)
+                logger.info(f"Cliente encontrado via ID: {client.id}")
             except Cliente.DoesNotExist:
                 return JsonResponse({
                     'success': False,
@@ -155,9 +169,10 @@ def criar_pedido(request):
                 }, status=400)
         else:
             client = request.client
+            logger.info(f"Cliente autenticado via middleware: {client.id}")
         
         pedido = PedidoService.criar_pedido(
-            client_id=client.id,
+            cliente_id=client.id,
             delivery_address=data.get('delivery_address'),
             notes=data.get('notes'),
             usuario='Sistema'

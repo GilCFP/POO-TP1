@@ -5,7 +5,7 @@ import { apiService } from '@shared/services/api';
  */
 class PedidoService {
   constructor() {
-    this.baseUrl = '/pedido/api';
+    this.baseUrl = '/api/pedidos';
   }
 
   /**
