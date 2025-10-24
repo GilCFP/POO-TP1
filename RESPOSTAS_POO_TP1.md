@@ -20,34 +20,139 @@ O tema do Projeto 1 é o desenvolvimento de um sistema para gerenciamento de um 
 
 ## 3 – Fluxograma Generalista
 
-```
-Página Inicial
-   |
-   v
-Login / Cadastro
-   |
-   v
-Menu Principal
-   |
-   +--> Fazer Pedido
-   |      |
-   |      v
-   |   Escolher Produtos
-   |      |
-   |      v
-   |   Adicionar ao Carrinho
-   |      |
-   |      v
-   |   Finalizar Pedido
-   |
-   +--> Consultar Status do Pedido
-   |
-   +--> Gerenciar Cadastro
-   |
-   +--> Sair
+### 3.1 - Fluxo Principal do Cliente
+
+```mermaid
+flowchart TD
+    A[🏠 Página Inicial] --> B{Cliente Autenticado?}
+    
+    B -->|Não| C[👤 Tela de Login/Cadastro]
+    B -->|Sim| D[🍽️ Cardápio Principal]
+    
+    C --> C1[📝 Formulário de Login]
+    C --> C2[➕ Criar Conta Temporária]
+    C --> C3[🔐 Criar Conta Permanente]
+    
+    C1 --> C1a{Login Válido?}
+    C1a -->|Não| C1b[❌ Mostrar Erro]
+    C1b --> C1
+    C1a -->|Sim| D
+    
+    C2 --> C2a[✅ Cliente Temporário Criado]
+    C2a --> D
+    
+    C3 --> C3a[✅ Cliente Permanente Criado]
+    C3a --> D
+    
+    D --> E[🔍 Navegar Produtos]
+    E --> F[➕ Adicionar ao Carrinho]
+    F --> G{Continuar Comprando?}
+    
+    G -->|Sim| E
+    G -->|Não| H[🛒 Visualizar Carrinho]
+    
+    H --> I[🏪 Checkout]
+    I --> J[📍 Escolher Endereço/Entrega]
+    J --> K[💳 Método de Pagamento]
+    K --> L[📋 Resumo do Pedido]
+    L --> M[✅ Finalizar Pedido]
+    
+    M --> N[📊 Status do Pedido]
+    N --> O{Pedido Concluído?}
+    
+    O -->|Não| P[⏳ Aguardar Atualização]
+    P --> N
+    O -->|Sim| Q[🎉 Pedido Entregue]
+    
+    Q --> R{Nova Compra?}
+    R -->|Sim| D
+    R -->|Não| S[👋 Logout/Sair]
 ```
 
-*O fluxograma pode ser desenhado em ferramentas como draw.io, Lucidchart ou até mesmo à mão e digitalizado.*
+### 3.2 - Fluxo de Estados do Pedido
+
+```mermaid
+stateDiagram-v2
+    [*] --> ORDERING : Cliente inicia pedido
+    
+    ORDERING --> ORDERING : Adicionar/Remover itens
+    ORDERING --> PENDING : Finalizar pedido
+    ORDERING --> CANCELED : Cliente cancela
+    
+    PENDING --> CONFIRMED : Restaurante confirma
+    PENDING --> CANCELED : Restaurante rejeita
+    
+    CONFIRMED --> PREPARING : Inicia preparação
+    PREPARING --> READY : Pedido pronto
+    READY --> DELIVERING : Saiu para entrega
+    DELIVERING --> DELIVERED : Cliente recebeu
+    
+    CANCELED --> [*] : Processo encerrado
+    DELIVERED --> [*] : Processo encerrado
+```
+
+### 3.3 - Fluxo de Componentes React
+
+```mermaid
+graph LR
+    A[CardapioApp.jsx] --> B[AdicionarCarrinhoButton.jsx]
+    B --> C[CarrinhoIndicador.jsx]
+    C --> D[CheckoutApp.jsx]
+    
+    D --> E[AddressSection.jsx]
+    D --> F[PaymentSection.jsx]
+    D --> G[OrderSummary.jsx]
+    D --> H[DeliveryOptions.jsx]
+    
+    I[LoginApp.jsx] --> J[RegisterApp.jsx]
+    
+    K[StatusApp.jsx] --> L[HistoricoApp.jsx]
+    
+    subgraph "Hooks Compartilhados"
+        M[useCarrinho.js]
+        N[useCheckout.js]
+    end
+    
+    A -.-> M
+    D -.-> N
+    C -.-> M
+```
+
+### 3.4 - Arquitetura de Comunicação Frontend-Backend
+
+```mermaid
+sequenceDiagram
+    participant U as 👤 Usuário
+    participant R as ⚛️ React Component
+    participant A as 🔗 API Service
+    participant D as 🐍 Django View
+    participant DB as 🗄️ Database
+    
+    U->>R: Clica "Adicionar ao Carrinho"
+    R->>A: adicionarProduto(produto, quantidade)
+    A->>D: POST /pedido/adicionar-item/
+    D->>DB: Criar/Atualizar ItemPedido
+    DB-->>D: ItemPedido salvo
+    D-->>A: JSON Response
+    A-->>R: Dados atualizados
+    R-->>U: Carrinho atualizado
+    
+    Note over R,D: Token CSRF em todas as requisições
+    Note over D,DB: Validações de negócio no Django
+```
+
+### 3.5 - Mapeamento de URLs e Componentes
+
+| Rota Django | Componente React | Funcionalidade |
+|-------------|------------------|----------------|
+| `/` | ProdutoApp.jsx | Cardápio principal |
+| `/cliente/login/` | LoginApp.jsx | Autenticação |
+| `/cliente/register/` | RegisterApp.jsx | Cadastro |
+| `/pedido/checkout/` | CheckoutApp.jsx | Finalização |
+| `/pedido/{id}/status/` | StatusApp.jsx | Acompanhamento |
+| `/pedido/historico/` | HistoricoApp.jsx | Histórico |
+
+Esta arquitetura de fluxo demonstra a integração completa entre Django (backend) e React (frontend), mostrando como o usuário navega pelo sistema desde a autenticação até a finalização do pedido, com estados bem definidos e comunicação eficiente entre as camadas.
 
 ## 4 – Modularização e Organização do Código
 
