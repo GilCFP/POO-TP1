@@ -1,86 +1,46 @@
-import React, { useState, useEffect } from 'react';
-import { apiService } from '@services/api';
+import React, { useState } from 'react';
 import LoadingSpinner from '@components/common/LoadingSpinner';
 import './historico.css';
 
 const HistoricoApp = ({ historicoData, csrfToken }) => {
-  const [pedidos, setPedidos] = useState(historicoData?.pedidos || []);
-  const [loading, setLoading] = useState(!historicoData?.pedidos);
-  const [error, setError] = useState(null);
+  const [pedidos] = useState(historicoData?.pedidos || []);
   const [filtro, setFiltro] = useState('todos');
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
 
-  // Configurar API service com CSRF token
-  useEffect(() => {
-    apiService.setCsrfToken(csrfToken);
-  }, [csrfToken]);
-
-  // Buscar histórico se não foi fornecido
-  useEffect(() => {
-    if (!historicoData?.pedidos) {
-      fetchHistorico();
-    }
-  }, []);
-
-  const fetchHistorico = async (pageNum = 1, filtroStatus = 'todos') => {
-    try {
-      setLoading(true);
-      const params = new URLSearchParams({
-        page: pageNum,
-        ...(filtroStatus !== 'todos' && { status: filtroStatus })
-      });
-
-      const response = await apiService.get(`/api/pedidos/historico/?${params}`);
-      
-      if (pageNum === 1) {
-        setPedidos(response.data.results);
-      } else {
-        setPedidos(prev => [...prev, ...response.data.results]);
-      }
-      
-      setHasMore(!!response.data.next);
-      setPage(pageNum);
-    } catch (err) {
-      setError('Erro ao carregar histórico de pedidos');
-      console.error('Erro ao buscar histórico:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Filtrar pedidos localmente (simplificado para trabalho de POO)
+  const pedidosFiltrados = pedidos.filter(pedido => {
+    if (filtro === 'todos') return true;
+    return pedido.status === filtro;
+  });
 
   const handleFiltroChange = (novoFiltro) => {
     setFiltro(novoFiltro);
-    setPage(1);
-    fetchHistorico(1, novoFiltro);
-  };
-
-  const loadMore = () => {
-    if (!loading && hasMore) {
-      fetchHistorico(page + 1, filtro);
-    }
   };
 
   const getStatusColor = (status) => {
+    // Mapear status strings do Django para cores
     const colors = {
-      'pendente': 'status-pending',
-      'confirmado': 'status-confirmed',
-      'preparando': 'status-preparing',
-      'pronto': 'status-ready',
-      'entregue': 'status-delivered',
-      'cancelado': 'status-cancelled'
+      'CANCELLED': 'status-cancelled',
+      'ORDERING': 'status-ordering',
+      'PENDING_PAYMENT': 'status-pending',
+      'WAITING': 'status-waiting',
+      'PREPARING': 'status-preparing',
+      'READY': 'status-ready',
+      'DELIVERING': 'status-delivering',
+      'DELIVERED': 'status-delivered'
     };
     return colors[status] || 'status-default';
   };
 
   const getStatusText = (status) => {
     const texts = {
-      'pendente': 'Pendente',
-      'confirmado': 'Confirmado',
-      'preparando': 'Preparando',
-      'pronto': 'Pronto',
-      'entregue': 'Entregue',
-      'cancelado': 'Cancelado'
+      'CANCELLED': '❌ Cancelado',
+      'ORDERING': '📝 Montando',
+      'PENDING_PAYMENT': '💳 Aguardando Pagamento',
+      'WAITING': '⏳ Confirmado',
+      'PREPARING': '👨‍🍳 Preparando',
+      'READY': '✅ Pronto',
+      'DELIVERING': '🚚 Em Entrega',
+      'DELIVERED': '🎉 Entregue'
     };
     return texts[status] || status;
   };
@@ -95,26 +55,20 @@ const HistoricoApp = ({ historicoData, csrfToken }) => {
     });
   };
 
-  if (loading && pedidos.length === 0) {
+  if (!pedidos || pedidos.length === 0) {
     return (
       <div className="historico-container">
-        <LoadingSpinner />
-        <p>Carregando histórico de pedidos...</p>
-      </div>
-    );
-  }
-
-  if (error && pedidos.length === 0) {
-    return (
-      <div className="historico-container">
-        <div className="error-message">
-          <h3>Ops! Algo deu errado</h3>
-          <p>{error}</p>
+        <div className="historico-header">
+          <h2>Histórico de Pedidos</h2>
+        </div>
+        <div className="no-orders">
+          <h3>📋 Nenhum pedido encontrado</h3>
+          <p>Você ainda não fez nenhum pedido.</p>
           <button 
-            onClick={() => fetchHistorico()}
-            className="btn-retry"
+            onClick={() => window.location.href = '/cardapio/'}
+            className="btn-new-order"
           >
-            Tentar Novamente
+            🛒 Fazer Primeiro Pedido
           </button>
         </div>
       </div>
@@ -128,18 +82,15 @@ const HistoricoApp = ({ historicoData, csrfToken }) => {
         <p>Acompanhe todos os seus pedidos anteriores</p>
       </div>
 
-      {/* Filtros */}
+      {/* Filtros Simplificados */}
       <div className="filtros-container">
         <h3>Filtrar por status:</h3>
         <div className="filtros">
           {[
-            { key: 'todos', label: 'Todos' },
-            { key: 'pendente', label: 'Pendentes' },
-            { key: 'confirmado', label: 'Confirmados' },
-            { key: 'preparando', label: 'Preparando' },
-            { key: 'pronto', label: 'Prontos' },
-            { key: 'entregue', label: 'Entregues' },
-            { key: 'cancelado', label: 'Cancelados' }
+            { key: 'todos', label: '📋 Todos' },
+            { key: 'DELIVERED', label: '🎉 Entregues' },
+            { key: 'PREPARING', label: '👨‍🍳 Preparando' },
+            { key: 'CANCELLED', label: '❌ Cancelados' }
           ].map(f => (
             <button
               key={f.key}
@@ -153,14 +104,14 @@ const HistoricoApp = ({ historicoData, csrfToken }) => {
       </div>
 
       {/* Lista de Pedidos */}
-      {pedidos.length === 0 ? (
+      {pedidosFiltrados.length === 0 ? (
         <div className="no-orders">
           <h3>Nenhum pedido encontrado</h3>
-          <p>Você ainda não fez nenhum pedido ou não há pedidos com o filtro selecionado.</p>
+          <p>Não há pedidos com o filtro selecionado.</p>
         </div>
       ) : (
         <div className="pedidos-list">
-          {pedidos.map((pedido) => (
+          {pedidosFiltrados.map((pedido) => (
             <div key={pedido.id} className="pedido-card">
               <div className="pedido-header">
                 <div className="pedido-info">
@@ -195,18 +146,20 @@ const HistoricoApp = ({ historicoData, csrfToken }) => {
 
               <div className="pedido-actions">
                 <button 
-                  onClick={() => window.location.href = `/pedidos/${pedido.id}/status/`}
+                  onClick={() => window.location.href = `/pedido/${pedido.id}/status/`}
                   className="btn-view-details"
                 >
-                  Ver Detalhes
+                  👁️ Ver Detalhes
                 </button>
                 
-                {pedido.status === 'entregue' && (
+                {pedido.status === 'DELIVERED' && (
                   <button 
-                    onClick={() => {/* Implementar recompra */}}
+                    onClick={() => {
+                      alert('Função "Pedir Novamente" - Simulação para trabalho de POO!\n\nEm um sistema real, isso adicionaria todos os itens ao carrinho.');
+                    }}
                     className="btn-reorder"
                   >
-                    Pedir Novamente
+                    🔄 Pedir Novamente
                   </button>
                 )}
               </div>
@@ -215,18 +168,16 @@ const HistoricoApp = ({ historicoData, csrfToken }) => {
         </div>
       )}
 
-      {/* Botão Carregar Mais */}
-      {hasMore && (
-        <div className="load-more-container">
-          <button 
-            onClick={loadMore}
-            disabled={loading}
-            className="btn-load-more"
-          >
-            {loading ? <LoadingSpinner size="small" /> : 'Carregar Mais'}
-          </button>
-        </div>
-      )}
+      {/* Informações adicionais */}
+      <div className="historico-footer">
+        <p>Mostrando {pedidosFiltrados.length} de {pedidos.length} pedidos</p>
+        <button 
+          onClick={() => window.location.href = '/cardapio/'}
+          className="btn-new-order-footer"
+        >
+          🛒 Fazer Novo Pedido
+        </button>
+      </div>
     </div>
   );
 };

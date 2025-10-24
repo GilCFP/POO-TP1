@@ -11,6 +11,8 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- Bundles gerados pelo webpack ficam em static/ com nomes como
+	shared/components.bundle.js e pedido/client/checkout.bundle.js -->
 <script src="{% static 'shared/client/vendor.bundle.js' %}"></script>
 <script src="{% static 'shared/components.bundle.js' %}"></script>
 <script src="{% static 'pedido/client/checkout.bundle.js' %}"></script>

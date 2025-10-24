@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Verifica se os elementos necessários existem
   const container = document.getElementById('checkout-root');
   const dataElement = document.getElementById('checkout-data');
+  console.log('Elemento de dados do checkout:', dataElement);
   const csrfElement = document.querySelector('[name=csrfmiddlewaretoken]');
 
   if (!container) {
@@ -41,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     root.render(
       <CheckoutApp 
         pedidoData={checkoutData.pedido}
-        enderecosData={checkoutData.enderecos || []}
+        enderecosData={checkoutData}
         csrfToken={csrfToken}
       />
     );

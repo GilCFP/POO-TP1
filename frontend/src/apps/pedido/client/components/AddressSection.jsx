@@ -1,94 +1,92 @@
 import React from 'react';
 
-const AddressSection = ({ address, onAddressChange, errors = {} }) => {
+const AddressSection = ({ address, onAddressChange, deliveryType }) => {
+  // Se for retirada, não mostra o formulário de endereço
+  if (deliveryType === 'pickup') {
+    return (
+      <div className="section-card">
+        <div className="section-header">
+          <h5 className="mb-0">🏪 Retirada no Local</h5>
+        </div>
+        <div className="section-body">
+          <div className="alert alert-info">
+            <strong>Endereço para retirada:</strong><br/>
+            Rua das Flores, 123 - Centro<br/>
+            Horário: Segunda a Sábado, 10h às 22h
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="address-section">
-      <h3>Endereço de Entrega</h3>
-      
-      <div className="address-form">
-        <div className="form-group">
-          <label htmlFor="street">Rua/Avenida</label>
-          <input
-            type="text"
-            id="street"
-            name="street"
-            value={address.street || ''}
-            onChange={(e) => onAddressChange({ ...address, street: e.target.value })}
-            className={errors.street ? 'error' : ''}
-            placeholder="Nome da rua, número"
-          />
-          {errors.street && <span className="error-message">{errors.street}</span>}
-        </div>
-
-        <div className="form-row">
-          <div className="form-group">
-            <label htmlFor="neighborhood">Bairro</label>
-            <input
-              type="text"
-              id="neighborhood"
-              name="neighborhood"
-              value={address.neighborhood || ''}
-              onChange={(e) => onAddressChange({ ...address, neighborhood: e.target.value })}
-              className={errors.neighborhood ? 'error' : ''}
-              placeholder="Bairro"
-            />
-            {errors.neighborhood && <span className="error-message">{errors.neighborhood}</span>}
+    <div className="section-card">
+      <div className="section-header">
+        <h5 className="mb-0">📍 Endereço de Entrega</h5>
+      </div>
+      <div className="section-body">
+        <div className="row">
+          <div className="col-md-8">
+            <div className="form-group mb-3">
+              <label htmlFor="street" className="form-label">Rua e Número *</label>
+              <input
+                type="text"
+                id="street"
+                name="street"
+                className="form-control"
+                value={address.street || ''}
+                onChange={(e) => onAddressChange({ ...address, street: e.target.value })}
+                placeholder="Ex: Rua das Flores, 123"
+                required
+              />
+            </div>
           </div>
-
-          <div className="form-group">
-            <label htmlFor="city">Cidade</label>
-            <input
-              type="text"
-              id="city"
-              name="city"
-              value={address.city || ''}
-              onChange={(e) => onAddressChange({ ...address, city: e.target.value })}
-              className={errors.city ? 'error' : ''}
-              placeholder="Cidade"
-            />
-            {errors.city && <span className="error-message">{errors.city}</span>}
+          <div className="col-md-4">
+            <div className="form-group mb-3">
+              <label htmlFor="neighborhood" className="form-label">Bairro *</label>
+              <input
+                type="text"
+                id="neighborhood"
+                name="neighborhood"
+                className="form-control"
+                value={address.neighborhood || ''}
+                onChange={(e) => onAddressChange({ ...address, neighborhood: e.target.value })}
+                placeholder="Ex: Centro"
+                required
+              />
+            </div>
           </div>
         </div>
 
-        <div className="form-row">
-          <div className="form-group">
-            <label htmlFor="zipCode">CEP</label>
-            <input
-              type="text"
-              id="zipCode"
-              name="zipCode"
-              value={address.zipCode || ''}
-              onChange={(e) => onAddressChange({ ...address, zipCode: e.target.value })}
-              className={errors.zipCode ? 'error' : ''}
-              placeholder="00000-000"
-              maxLength={9}
-            />
-            {errors.zipCode && <span className="error-message">{errors.zipCode}</span>}
+        <div className="row">
+          <div className="col-md-6">
+            <div className="form-group mb-3">
+              <label htmlFor="complement" className="form-label">Complemento</label>
+              <input
+                type="text"
+                id="complement"
+                name="complement"
+                className="form-control"
+                value={address.complement || ''}
+                onChange={(e) => onAddressChange({ ...address, complement: e.target.value })}
+                placeholder="Apt, Bloco, etc. (opcional)"
+              />
+            </div>
           </div>
-
-          <div className="form-group">
-            <label htmlFor="complement">Complemento</label>
-            <input
-              type="text"
-              id="complement"
-              name="complement"
-              value={address.complement || ''}
-              onChange={(e) => onAddressChange({ ...address, complement: e.target.value })}
-              placeholder="Apartamento, bloco, etc. (opcional)"
-            />
+          <div className="col-md-6">
+            <div className="form-group mb-3">
+              <label htmlFor="reference" className="form-label">Ponto de Referência</label>
+              <input
+                type="text"
+                id="reference"
+                name="reference"
+                className="form-control"
+                value={address.reference || ''}
+                onChange={(e) => onAddressChange({ ...address, reference: e.target.value })}
+                placeholder="Próximo ao shopping (opcional)"
+              />
+            </div>
           </div>
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="reference">Ponto de Referência</label>
-          <input
-            type="text"
-            id="reference"
-            name="reference"
-            value={address.reference || ''}
-            onChange={(e) => onAddressChange({ ...address, reference: e.target.value })}
-            placeholder="Próximo ao shopping, em frente à escola... (opcional)"
-          />
         </div>
       </div>
     </div>

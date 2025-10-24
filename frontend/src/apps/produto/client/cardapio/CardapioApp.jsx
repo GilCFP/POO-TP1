@@ -46,7 +46,7 @@ const CardapioApp = ({ produtosData }) => {
 
     const handleViewCarrinho = (pedidoAtivo) => {
         // Redirecionar para página de checkout
-        window.location.href = '/pedido/checkout/';
+        window.location.href = '/pedidos/checkout/';
     };
 
     if (!produtosData || produtosData.length === 0) {

@@ -30,7 +30,7 @@ export const useCheckout = (initialPedido, csrfToken) => {
       const response = await pedidoService.atualizarQuantidadeItem(
         pedido.id,
         produtoId,
-        newQuantidade,
+        newQuantity,
         getCSRFToken()
       );
 
@@ -90,7 +90,7 @@ export const useCheckout = (initialPedido, csrfToken) => {
   }, [pedido, csrfToken]);
 
   /**
-   * Finaliza o pedido
+   * Finaliza o pedido fazendo chamadas reais para o backend
    */
   const finalizarPedido = useCallback(async (formData) => {
     if (!pedido) return;
@@ -104,36 +104,64 @@ export const useCheckout = (initialPedido, csrfToken) => {
         return token ? token.value : csrfToken;
       };
 
-      // Primeiro finaliza o pedido (muda para aguardando pagamento)
-      const finalizeResponse = await pedidoService.finalizarPedido(
-        pedido.id,
-        getCSRFToken()
-      );
+      console.log('Finalizando pedido:', pedido.id);
 
-      if (!finalizeResponse.success) {
-        throw new Error(finalizeResponse.error || 'Erro ao finalizar pedido');
+      // 1. Primeiro finaliza o pedido (muda status de ORDERING para PENDING_PAYMENT)
+      const finalizeResponse = await fetch(`/api/pedidos/${pedido.id}/finalizar/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+          delivery_type: deliveryType,
+          delivery_address: deliveryType === 'delivery' ? formData.get('delivery_address') || 'Endereço do cliente' : null
+        })
+      });
+
+      const finalizeData = await finalizeResponse.json();
+      console.log('Resposta do finalizar:', finalizeData);
+
+      if (!finalizeData.success) {
+        throw new Error(finalizeData.error || 'Erro ao finalizar pedido');
       }
 
-      // Depois processa o pagamento
-      const paymentResponse = await pedidoService.processarPagamento(
-        pedido.id,
-        paymentMethod,
-        getCSRFToken()
-      );
+      // 2. Depois processa o pagamento (muda para status seguinte)
+      const paymentResponse = await fetch(`/api/pedidos/processar-pagamento/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+          pedido_id: pedido.id,
+          metodo_pagamento: paymentMethod
+        })
+      });
 
-      if (paymentResponse.success) {
-        // Sucesso - redireciona para status do pedido
-        window.location.href = `/pedido/${pedido.id}/status/`;
-      } else {
-        throw new Error(paymentResponse.error || 'Erro ao processar pagamento');
+      const paymentData = await paymentResponse.json();
+      console.log('Resposta do pagamento:', paymentData);
+
+      if (!paymentData.success) {
+        throw new Error(paymentData.error || 'Erro ao processar pagamento');
       }
+
+      // Sucesso - mostra mensagem e redireciona
+      alert(`✅ Pedido finalizado com sucesso!\n\n` +
+            `Tipo: ${deliveryType === 'pickup' ? 'Retirada' : 'Entrega'}\n` +
+            `Pagamento: ${paymentMethod === 'card' ? 'Cartão' : paymentMethod === 'pix' ? 'PIX' : 'Dinheiro'}\n` +
+            `Total: R$ ${(pedido.total_price || 0).toFixed(2)}`);
+      
+      // Redireciona para página de status
+      window.location.href = `/pedidos/${pedido.id}/status/`;
+      
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Erro ao finalizar pedido. Tente novamente.');
       console.error('Erro ao finalizar pedido:', err);
     } finally {
       setLoading(false);
     }
-  }, [pedido, deliveryType, paymentMethod, selectedAddress, csrfToken]);
+  }, [pedido, deliveryType, paymentMethod, csrfToken]);
 
   return {
     // Estado

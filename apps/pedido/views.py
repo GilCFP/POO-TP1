@@ -23,32 +23,61 @@ def checkout_view(request):
     client = request.client
     
     # Buscar pedido ativo do cliente
-    pedido = Pedido.objects.filter(cliente=client, status='pendente').first()
+    print(f"Buscando pedido para cliente ID: {client.id}")
+    pedido = Pedido.objects.filter(cliente=client, status=StatusPedido.ORDERING).first()
     
     if not pedido:
         # Se não há pedido pendente, criar estrutura vazia
+        print("Nenhum pedido pendente encontrado para o cliente.")
         checkout_data = {
             'pedido': None,
             'client': ClienteService.get_client_summary(client),
+            'endereco_selecionado': {
+                'street': '',
+                'neighborhood': '',
+                'complement': '',
+                'reference': ''
+            },
+            'pagamento': {
+                'method': 'card',
+                'changeFor': ''
+            },
             'message': 'Nenhum pedido pendente encontrado'
         }
     else:
+        # Criar estrutura com dados dos items com IDs únicos
+        pedido_items = []
+        for i, item in enumerate(pedido.items.all()):
+            pedido_items.append({
+                'id': getattr(item, 'id', i + 1),  # Usar ID do item ou índice como fallback
+                'produto': {
+                    'nome': item.produto.nome if hasattr(item, 'produto') else 'Produto',
+                    'descricao': getattr(item.produto, 'descricao', '') if hasattr(item, 'produto') else ''
+                },
+                'quantidade': getattr(item, 'quantidade', 1),
+                'price': float(getattr(item, 'price', 0)),
+                'subtotal': float(getattr(item, 'subtotal', getattr(item, 'price', 0) * getattr(item, 'quantidade', 1)))
+            })
+        
         checkout_data = {
             'pedido': {
                 'id': pedido.id,
-                'items': [
-                    {
-                        'produto': {'nome': item.produto.nome if hasattr(item, 'produto') else 'Produto'},
-                        'quantity': getattr(item, 'quantity', 1),
-                        'price': float(getattr(item, 'price', 0))
-                    } for item in getattr(pedido, 'items', [])
-                ],
+                'items': pedido_items,
                 'total_price': float(getattr(pedido, 'total_price', 0)),
                 'status': pedido.status
             },
-            'client': ClienteService.get_client_summary(client)
+            'client': ClienteService.get_client_summary(client),
+            'endereco_selecionado': {
+                'street': getattr(client, 'endereco', ''),
+                'neighborhood': '',
+                'complement': '',
+                'reference': ''
+            },
+            'pagamento': {
+                'method': 'card',
+                'changeFor': ''
+            }
         }
-    
     return render(request, 'client/checkout.html', {
         'checkout_data': checkout_data
     })
@@ -74,7 +103,7 @@ def status_view(request, pedido_id):
                     'produto': {'nome': item.produto.nome if hasattr(item, 'produto') else 'Produto'},
                     'quantity': getattr(item, 'quantity', 1),
                     'price': float(getattr(item, 'price', 0))
-                } for item in getattr(pedido, 'items', [])
+                } for item in pedido.items.all()
             ],
             'total_price': float(getattr(pedido, 'total_price', 0)),
             'delivery_address': getattr(pedido, 'delivery_address', None)
@@ -110,7 +139,7 @@ def historico_view(request):
                         'produto': {'nome': item.produto.nome if hasattr(item, 'produto') else 'Produto'},
                         'quantity': getattr(item, 'quantity', 1),
                         'price': float(getattr(item, 'price', 0))
-                    } for item in getattr(pedido, 'items', [])
+                    } for item in pedido.items.all()
                 ],
                 'total_price': float(getattr(pedido, 'total_price', 0))
             } for pedido in pedidos[:20]  # Limitar a 20 pedidos iniciais

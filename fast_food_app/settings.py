@@ -127,7 +127,9 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+# Use an absolute URL path for STATIC_URL so {% static %} produces absolute
+# URLs like `/static/...` instead of relative paths which can cause 404s.
+STATIC_URL = '/static/'
 
 # Diretórios adicionais onde procurar arquivos estáticos
 STATICFILES_DIRS = [

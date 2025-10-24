@@ -5,21 +5,15 @@ import './status.css';
 
 const StatusApp = ({ statusData, csrfToken }) => {
   const [pedido, setPedido] = useState(statusData?.pedido || null);
-  const [loading, setLoading] = useState(!statusData?.pedido);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Buscar status do pedido se não foi fornecido
-  useEffect(() => {
-    if (!pedido && statusData?.pedidoId) {
-      fetchPedidoStatus(statusData.pedidoId);
-    }
-  }, [pedido, statusData]);
-
-  // Auto-refresh a cada 30 segundos para atualizações em tempo real
+  // Auto-refresh a cada 30 segundos para atualizações em tempo real (simplificado)
   useEffect(() => {
     if (pedido && pedido.id) {
       const interval = setInterval(() => {
-        fetchPedidoStatus(pedido.id);
+        // Para trabalho de POO, apenas simula refresh
+        console.log('Simulando refresh do status...');
       }, 30000); // 30 segundos
 
       return () => clearInterval(interval);
@@ -29,14 +23,10 @@ const StatusApp = ({ statusData, csrfToken }) => {
   const fetchPedidoStatus = async (pedidoId) => {
     try {
       setLoading(true);
-      const response = await pedidoService.obterPedido(pedidoId);
-      
-      if (response.success) {
-        setPedido(response.pedido);
-        setError(null);
-      } else {
-        throw new Error(response.error || 'Erro ao buscar pedido');
-      }
+      // Para trabalho de POO, apenas simula carregamento
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log('Status atualizado (simulado)');
+      setError(null);
     } catch (err) {
       setError('Erro ao carregar status do pedido');
       console.error('Erro ao buscar pedido:', err);
@@ -45,32 +35,34 @@ const StatusApp = ({ statusData, csrfToken }) => {
     }
   };
 
-  const getStatusColor = (statusCode) => {
+  const getStatusColor = (status) => {
+    // Mapear status strings para cores (baseado no StatusPedido do Django)
     const colors = {
-      '-1': 'status-cancelled',    // Cancelado
-      '0': 'status-ordering',      // Fazendo pedido
-      '1': 'status-pending',       // Aguardando pagamento
-      '2': 'status-waiting',       // Aguardando
-      '3': 'status-preparing',     // Preparando
-      '4': 'status-ready',         // Pronto
-      '5': 'status-delivering',    // Sendo entregue
-      '6': 'status-delivered'      // Entregue
+      '-1': 'status-cancelled',   // Cancelado
+      '0': 'status-ordering',     // Fazendo pedido
+      '1': 'status-pending',      // Aguardando pagamento
+      '2': 'status-waiting',      // Aguardando
+      '3': 'status-preparing',    // Preparando
+      '4': 'status-ready',        // Pronto
+      '5': 'status-delivering',   // Sendo entregue
+      '6': 'status-delivered'     // Entregue
     };
-    return colors[statusCode] || 'status-default';
+    return colors[String(status)] || 'status-default';
+    return colors[status] || 'status-default';
   };
 
-  const getStatusText = (statusCode) => {
+  const getStatusText = (status) => {
     const texts = {
-      '-1': 'Pedido Cancelado',
-      '0': 'Montando Pedido',
-      '1': 'Aguardando Pagamento',
-      '2': 'Pedido Confirmado',
-      '3': 'Preparando seu Pedido',
-      '4': 'Pedido Pronto!',
-      '5': 'Saiu para Entrega',
-      '6': 'Pedido Entregue'
+      '-1': '❌ Pedido Cancelado',
+      '0': '📝 Montando Pedido',
+      '1': '💳 Aguardando Pagamento',
+      '2': '⏳ Pedido Confirmado',
+      '3': '👨‍🍳 Preparando seu Pedido',
+      '4': '✅ Pedido Pronto!',
+      '5': '🚚 Saiu para Entrega',
+      '6': '🎉 Pedido Entregue'
     };
-    return texts[statusCode] || 'Status Desconhecido';
+    return texts[status] || '❓ Status Desconhecido';
   };
 
   if (loading) {
@@ -115,13 +107,16 @@ const StatusApp = ({ statusData, csrfToken }) => {
       <div className="status-header">
         <h2>Status do Pedido #{pedido.id}</h2>
         <p className="order-date">
-          Pedido realizado em: {new Date(pedido.created_at).toLocaleString('pt-BR')}
+          {pedido.created_at ? (
+            `Pedido realizado em: ${new Date(pedido.created_at).toLocaleString('pt-BR')}`
+          ) : (
+            'Data do pedido não disponível'
+          )}
         </p>
       </div>
 
       <div className="status-progress">
         <div className={`status-badge ${getStatusColor(pedido.status)}`}>
-          <span className="status-icon">📋</span>
           <span className="status-text">{getStatusText(pedido.status)}</span>
         </div>
         
@@ -135,17 +130,21 @@ const StatusApp = ({ statusData, csrfToken }) => {
       <div className="order-details">
         <h3>Detalhes do Pedido</h3>
         <div className="order-items">
-          {pedido.items?.map((item, index) => (
-            <div key={index} className="order-item">
-              <span className="item-name">{item.produto?.nome || item.name}</span>
-              <span className="item-quantity">x{item.quantity}</span>
-              <span className="item-price">R$ {item.price?.toFixed(2)}</span>
-            </div>
-          ))}
+          {pedido.items?.length > 0 ? (
+            pedido.items.map((item, index) => (
+              <div key={index} className="order-item">
+                <span className="item-name">{item.produto?.nome || 'Produto'}</span>
+                <span className="item-quantity">x{item.quantity || 1}</span>
+                <span className="item-price">R$ {(item.price || 0).toFixed(2)}</span>
+              </div>
+            ))
+          ) : (
+            <p>Nenhum item encontrado</p>
+          )}
         </div>
         
         <div className="order-total">
-          <strong>Total: R$ {pedido.total_price?.toFixed(2)}</strong>
+          <strong>Total: R$ {(pedido.total_price || 0).toFixed(2)}</strong>
         </div>
       </div>
 
@@ -160,13 +159,25 @@ const StatusApp = ({ statusData, csrfToken }) => {
         <button 
           onClick={() => fetchPedidoStatus(pedido.id)}
           className="btn-refresh"
+          disabled={loading}
         >
-          🔄 Atualizar Status
+          {loading ? '🔄 Atualizando...' : '🔄 Atualizar Status'}
         </button>
         
-        {pedido.status === 'pendente' && (
+        <button 
+          onClick={() => window.location.href = '/produtos/'}
+          className="btn-new-order"
+        >
+          🛒 Fazer Novo Pedido
+        </button>
+        
+        {(pedido.status === 'ORDERING' || pedido.status === 'PENDING_PAYMENT') && (
           <button 
-            onClick={() => {/* Implementar cancelamento */}}
+            onClick={() => {
+              if (confirm('Tem certeza que deseja cancelar este pedido?')) {
+                alert('Pedido cancelado! (simulação para trabalho de POO)');
+              }
+            }}
             className="btn-cancel"
           >
             ❌ Cancelar Pedido

@@ -26,6 +26,25 @@ const CheckoutApp = ({ pedidoData, enderecosData, csrfToken }) => {
     setSelectedAddress
   } = useCheckout(pedidoData, csrfToken);
 
+  // Estados locais para endereço e pagamento
+  const [currentAddress, setCurrentAddress] = useState(enderecosData?.endereco_selecionado || {
+    street: '',
+    neighborhood: '',
+    city: '',
+    zipCode: '',
+    complement: '',
+    reference: ''
+  });
+
+  const [currentPayment, setCurrentPayment] = useState(enderecosData?.pagamento || {
+    method: 'card',
+    cardNumber: '',
+    cardExpiry: '',
+    cardCvv: '',
+    cardName: '',
+    changeFor: ''
+  });
+
   if (loading && !pedido) {
     return <LoadingSpinner message="Carregando checkout..." />;
   }
@@ -77,16 +96,15 @@ const CheckoutApp = ({ pedidoData, enderecosData, csrfToken }) => {
             
             {/* Endereço de Entrega */}
             <AddressSection 
+              address={currentAddress}
+              onAddressChange={setCurrentAddress}
               deliveryType={deliveryType}
-              enderecos={enderecosData}
-              selectedAddress={selectedAddress}
-              onAddressChange={setSelectedAddress}
             />
             
             {/* Método de Pagamento */}
             <PaymentSection 
-              selected={paymentMethod}
-              onChange={setPaymentMethod}
+              payment={currentPayment}
+              onPaymentChange={setCurrentPayment}
             />
 
             {/* Botão de Finalizar */}
