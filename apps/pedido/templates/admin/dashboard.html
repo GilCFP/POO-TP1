@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Painel Administrativo - Pedidos{% endblock %}
+
+{% block content %}
+<!-- Dados para o React -->
+{{ admin_data|json_script:"admin-data" }}
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+<!-- Container do React -->
+<div id="admin-root"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'shared/client/vendor.bundle.js' %}"></script>
+<script src="{% static 'shared/components.bundle.js' %}"></script>
+<script src="{% static 'pedido/admin/dashboard.bundle.js' %}"></script>
+{% endblock %}

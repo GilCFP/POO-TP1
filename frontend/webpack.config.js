@@ -12,6 +12,9 @@ module.exports = {
     'pedido/client/status': './src/apps/pedido/client/status/index.js',
     'pedido/client/historico': './src/apps/pedido/client/historico/index.js',
     
+    // Admin scope
+    'pedido/admin/dashboard': './src/apps/pedido/admin/dashboard/index.js',
+    
     // === CLIENTE APP ===
     // Client scope
     'cliente/client/auth': './src/apps/cliente/client/auth/index.js',

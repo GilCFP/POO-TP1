@@ -11,6 +11,9 @@ urlpatterns = [
     path('<int:pedido_id>/status/', views.status_view, name='status'),
     path('historico/', views.historico_view, name='historico'),
     
+    # Admin views
+    path('admin/', views.admin_dashboard, name='admin_dashboard'),
+    
     # ==================== API ENDPOINTS - CLIENTE ====================
     
     # Gestão de pedidos

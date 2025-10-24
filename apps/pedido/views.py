@@ -844,4 +844,56 @@ def _obter_estatisticas_pedido(request, pedido_id):
             'success': False,
             'error': f'Erro ao obter estatísticas: {str(e)}'
         }, status=500)
+
+
+# ==================== VIEWS ADMINISTRATIVAS ====================
+
+def admin_dashboard(request):
+    """View para o painel administrativo de pedidos."""
+    # Obter todos os pedidos agrupados por status
+    pedidos_por_status = {}
+    for status_choice in StatusPedido.choices:
+        status_code, status_name = status_choice
+        pedidos = Pedido.objects.filter(status=status_code).order_by('-created_at')
+        
+        pedidos_data = []
+        for pedido in pedidos:
+            pedidos_data.append({
+                'id': pedido.id,
+                'cliente': {
+                    'id': pedido.cliente.id,
+                    'nome': pedido.cliente.name,
+                    'telefone': pedido.cliente.phone
+                },
+                'status': {
+                    'codigo': pedido.status,
+                    'nome': pedido.get_status_display()
+                },
+                'total': float(pedido.total_price),
+                'criado_em': pedido.created_at.isoformat(),
+                'tempo_estimado_entrega': pedido.estimated_delivery_time.isoformat() if pedido.estimated_delivery_time else None,
+                'endereco_entrega': pedido.delivery_address,
+                'observacoes': pedido.notes,
+                'items': [{
+                    'id': item.id,
+                    'produto_nome': item.produto.name,
+                    'quantidade': item.quantity,
+                    'preco_unitario': float(item.unit_price),
+                    'preco_total': float(item.total_price)
+                } for item in pedido.items.all()]
+            })
+        
+        pedidos_por_status[status_code] = {
+            'nome': status_name,
+            'pedidos': pedidos_data,
+            'total': len(pedidos_data)
+        }
+    
+    admin_data = {
+        'pedidos_por_status': pedidos_por_status,
+        'status_choices': [{'codigo': code, 'nome': name} for code, name in StatusPedido.choices],
+        'total_pedidos': Pedido.objects.count()
+    }
+    
+    return render(request, 'admin/dashboard.html', {'admin_data': admin_data})
     
