@@ -29,7 +29,10 @@ urlpatterns = [
     # As URLs da API de produtos agora estão dentro de 'apps.produto.urls' com prefixo 'api/'
     path('clientes/', include('apps.cliente.urls')),
     path('api/pedidos/', include('apps.pedido.urls')),
-    path('api/restaurante/', include('apps.restaurante.urls')),
+    path('api/restaurante/', include('apps.restaurante.api_urls')),
+    
+    # Restaurant frontend views
+    path('restaurante/', include('apps.restaurante.urls')),
     
     # Client pages
     path('produtos/', include('apps.produto.urls')),

@@ -207,6 +207,9 @@ class PedidoService:
                 usuario=usuario,
                 observacoes=observacoes
             )
+            
+            # Associar automaticamente à cozinha quando o status for WAITING
+            PedidoService._associar_pedido_cozinha(pedido)
         
         return pedido
     
@@ -240,6 +243,9 @@ class PedidoService:
                 usuario=usuario,
                 observacoes='Status avançado automaticamente'
             )
+            
+            # Associar automaticamente à cozinha quando necessário
+            PedidoService._associar_pedido_cozinha(pedido)
         
         return pedido
     
@@ -469,3 +475,49 @@ class PedidoService:
             usuario,
             f"Pagamento processado via {pedido.payment_method}"
         )
+    
+    @staticmethod
+    def _associar_pedido_cozinha(pedido: Pedido) -> None:
+        """
+        Associa automaticamente um pedido à cozinha baseado no seu status.
+        
+        Args:
+            pedido: Instância do pedido
+        """
+        try:
+            from apps.restaurante.models import Cozinha
+            
+            # Buscar a primeira cozinha ativa
+            cozinha = Cozinha.objects.filter(is_active=True).first()
+            if not cozinha:
+                return  # Se não há cozinha ativa, não faz nada
+            
+            # Remover o pedido de todos os relacionamentos primeiro (sem gerar erro se não existir)
+            try:
+                cozinha.orders_in_queue.remove(pedido)
+            except:
+                pass
+            try:
+                cozinha.orders_in_progress.remove(pedido)
+            except:
+                pass
+            try:
+                cozinha.orders_ready.remove(pedido)
+            except:
+                pass
+            
+            # Associar ao relacionamento correto baseado no status
+            if pedido.status == StatusPedido.WAITING:
+                cozinha.orders_in_queue.add(pedido)
+            elif pedido.status == StatusPedido.PREPARING:
+                cozinha.orders_in_progress.add(pedido)
+            elif pedido.status == StatusPedido.READY:
+                cozinha.orders_ready.add(pedido)
+            # Para outros status (BEING_DELIVERED, DELIVERED, etc.), não associa
+            
+        except Exception as e:
+            # Log do erro mas não falha a operação principal
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Erro ao associar pedido #{pedido.id} à cozinha: {e}")
+            pass

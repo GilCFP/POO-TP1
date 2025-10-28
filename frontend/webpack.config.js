@@ -23,6 +23,10 @@ module.exports = {
     // === PRODUTO APP ===
     // Client scope
     'produto/client/cardapio': './src/apps/produto/client/cardapio/index.js',
+    
+    // === RESTAURANTE APP ===
+    // Admin scope
+    'restaurante/admin/kanban': './src/apps/restaurante/kanban/index.js',
   },
   
   output: {

@@ -4,5 +4,6 @@ from . import views
 app_name = 'restaurante'
 
 urlpatterns = [
-    # URLs para API de restaurante
+    # Frontend view for kanban interface
+    path('kanban/', views.KanbanView.as_view(), name='kanban'),
 ]

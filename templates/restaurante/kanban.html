@@ -1,0 +1,681 @@
+{% extends "restaurante/base.html" %}
+{% load static %}
+
+{% block page_title %}Kanban{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Importar Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #f8f9fa;
+        min-height: 100vh;
+    }
+    
+    .kanban-container {
+        overflow-x: hidden; /* Remove o scroll horizontal */
+        padding: 24px;
+        background: transparent;
+        width: 100%;
+    }
+    
+    .kanban-board {
+        display: flex;
+        gap: 16px;
+        width: 100%;
+        padding: 0;
+        align-items: flex-start;
+    }
+    
+    .kanban-column {
+        flex: 1;
+        min-width: 0; /* Permite que as colunas encolham */
+        max-width: 25%; /* Cada coluna ocupa no máximo 25% da tela */
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 16px;
+        padding: 0;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .kanban-column:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    }
+    
+    .kanban-column-header {
+        color: white;
+        padding: 20px 24px;
+        border-radius: 16px 16px 0 0;
+        margin-bottom: 0;
+        text-align: center;
+        font-weight: 600;
+        font-size: 1.1em;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .kanban-column-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+        pointer-events: none;
+    }
+    
+    .kanban-column-header.waiting {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        box-shadow: 0 4px 20px rgba(240, 147, 251, 0.4);
+    }
+    
+    .kanban-column-header.preparing {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        box-shadow: 0 4px 20px rgba(79, 172, 254, 0.4);
+    }
+    
+    .kanban-column-header.ready {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        box-shadow: 0 4px 20px rgba(67, 233, 123, 0.4);
+    }
+    
+    .kanban-column-header.being-delivered {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        box-shadow: 0 4px 20px rgba(250, 112, 154, 0.4);
+    }
+    
+    .order-cards-container {
+        max-height: 70vh;
+        overflow-y: auto;
+        padding: 16px;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(0,0,0,0.2) transparent;
+    }
+    
+    .order-cards-container::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .order-cards-container::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    
+    .order-cards-container::-webkit-scrollbar-thumb {
+        background: rgba(0,0,0,0.2);
+        border-radius: 3px;
+    }
+    
+    .order-card {
+        background: white;
+        border: none;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .order-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .order-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    }
+    
+    .order-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .order-id {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85em;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+    
+    .order-total {
+        color: #10b981;
+        font-weight: 700;
+        font-size: 1.1em;
+        background: rgba(16, 185, 129, 0.1);
+        padding: 6px 12px;
+        border-radius: 8px;
+    }
+    
+    .order-customer {
+        margin-bottom: 12px;
+        padding: 10px;
+        background: #f8fafc;
+        border-radius: 8px;
+        border-left: 3px solid #3b82f6;
+    }
+    
+    .order-customer strong {
+        color: #1e293b;
+        font-weight: 600;
+        font-size: 1.05em;
+        display: block;
+        margin-bottom: 4px;
+    }
+    
+    .order-customer small {
+        color: #64748b;
+        font-size: 0.9em;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .order-customer small::before {
+        content: '📞';
+        font-size: 0.9em;
+    }
+    
+    .order-items {
+        margin-bottom: 12px;
+        background: #fefefe;
+        border-radius: 8px;
+        padding: 10px;
+        border: 1px solid #f1f5f9;
+    }
+    
+    .order-items > div {
+        padding: 6px 0;
+        color: #374151;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-bottom: 1px solid #f9fafb;
+    }
+    
+    .order-items > div:last-child {
+        border-bottom: none;
+    }
+    
+    .order-items > div::before {
+        content: '🍽️';
+        font-size: 0.9em;
+    }
+    
+    .order-timestamp {
+        font-size: 0.85em;
+        color: #6b7280;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 500;
+    }
+    
+    .order-timestamp::before {
+        content: '🕒';
+        font-size: 0.9em;
+    }
+    
+    .order-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .btn-advance {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 25px;
+        font-size: 0.9em;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn-advance::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+    }
+    
+    .btn-advance:hover::before {
+        left: 100%;
+    }
+    
+    .btn-advance:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-advance:active {
+        transform: translateY(0);
+    }
+    
+    .btn-advance:disabled {
+        background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-top: 2px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-right: 8px;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .empty-column {
+        text-align: center;
+        color: #9ca3af;
+        font-style: italic;
+        padding: 60px 20px;
+        background: #f9fafb;
+        border-radius: 12px;
+        margin: 20px;
+        border: 2px dashed #d1d5db;
+        font-weight: 500;
+    }
+    
+    .empty-column::before {
+        content: '📋';
+        display: block;
+        font-size: 2em;
+        margin-bottom: 12px;
+        opacity: 0.5;
+    }
+    
+    /* Animações de entrada */
+    .order-card {
+        animation: slideInUp 0.3s ease-out;
+    }
+    
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Badge para status de entrega */
+    .badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.85em;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+    }
+    
+    /* Responsividade melhorada */
+    @media (max-width: 1200px) {
+        .kanban-board {
+            gap: 12px;
+        }
+        
+        .kanban-column {
+            max-width: none; /* Remove limite de largura em telas menores */
+        }
+        
+        .order-cards-container {
+            padding: 12px;
+        }
+        
+        .order-card {
+            padding: 12px;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .kanban-container {
+            padding: 12px;
+        }
+        
+        .kanban-board {
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .kanban-column {
+            max-width: none;
+            min-width: auto;
+        }
+        
+        .order-cards-container {
+            max-height: 50vh;
+            padding: 12px;
+        }
+        
+        .order-card {
+            padding: 12px;
+        }
+        
+        .btn-advance {
+            padding: 8px 16px;
+            font-size: 0.85em;
+        }
+    }
+    
+    /* Melhorias no header da página */
+    .d-flex.justify-content-between.align-items-center.mb-4 h2 {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-weight: 700;
+        font-size: 2.2em;
+        margin: 0;
+    }
+    
+    .badge.bg-info {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+</style>
+{% endblock %}
+
+{% block restaurant_content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4" style="background: rgba(255,255,255,0.95); padding: 24px; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2);">
+            <h2 style="margin: 0; display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 1.2em;">🍳</span>
+                Pedidos da Cozinha
+            </h2>
+            {% if cozinha_info %}
+            <div class="badge bg-info" style="display: flex; align-items: center; gap: 8px;">
+                <span>⚡</span>
+                Capacidade: {{ cozinha_info.capacidade_atual }}/{{ cozinha_info.capacidade_total }}
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Kanban Board -->
+        <div class="kanban-container">
+            <div class="kanban-board">
+                <!-- Aguardando Column -->
+                <div class="kanban-column">
+                    <div class="kanban-column-header waiting">
+                        Aguardando ({{ orders_by_status.2.total|default:0 }})
+                    </div>
+                    <div class="order-cards-container">
+                        {% if orders_by_status.2.orders %}
+                            {% for order in orders_by_status.2.orders %}
+                            <div class="order-card" data-order-id="{{ order.id }}">
+                                <div class="order-header">
+                                    <span class="order-id">#{{ order.id }}</span>
+                                    <span class="order-total">R$ {{ order.total|floatformat:2 }}</span>
+                                </div>
+                                <div class="order-customer">
+                                    <strong>{{ order.cliente.nome }}</strong>
+                                    {% if order.cliente.telefone %}
+                                    <br><small>{{ order.cliente.telefone }}</small>
+                                    {% endif %}
+                                </div>
+                                {% if order.items %}
+                                <div class="order-items">
+                                    {% for item in order.items %}
+                                    <div>{{ item.quantidade }}x {{ item.produto_nome }}</div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="order-timestamp">
+                                    {{ order.criado_em|date:"d/m/Y H:i" }}
+                                </div>
+                                <div class="order-actions">
+                                    <button class="btn-advance" onclick="advanceOrder({{ order.id }})">
+                                        Iniciar Preparo
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                        <div class="empty-column">
+                            Nenhum pedido aguardando
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Preparando Column -->
+                <div class="kanban-column">
+                    <div class="kanban-column-header preparing">
+                        Preparando ({{ orders_by_status.3.total|default:0 }})
+                    </div>
+                    <div class="order-cards-container">
+                        {% if orders_by_status.3.orders %}
+                            {% for order in orders_by_status.3.orders %}
+                            <div class="order-card" data-order-id="{{ order.id }}">
+                                <div class="order-header">
+                                    <span class="order-id">#{{ order.id }}</span>
+                                    <span class="order-total">R$ {{ order.total|floatformat:2 }}</span>
+                                </div>
+                                <div class="order-customer">
+                                    <strong>{{ order.cliente.nome }}</strong>
+                                    {% if order.cliente.telefone %}
+                                    <br><small>{{ order.cliente.telefone }}</small>
+                                    {% endif %}
+                                </div>
+                                {% if order.items %}
+                                <div class="order-items">
+                                    {% for item in order.items %}
+                                    <div>{{ item.quantidade }}x {{ item.produto_nome }}</div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="order-timestamp">
+                                    {{ order.criado_em|date:"d/m/Y H:i" }}
+                                </div>
+                                <div class="order-actions">
+                                    <button class="btn-advance" onclick="advanceOrder({{ order.id }})">
+                                        Marcar Pronto
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                        <div class="empty-column">
+                            Nenhum pedido em preparo
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Pronto Column -->
+                <div class="kanban-column">
+                    <div class="kanban-column-header ready">
+                        Pronto ({{ orders_by_status.4.total|default:0 }})
+                    </div>
+                    <div class="order-cards-container">
+                        {% if orders_by_status.4.orders %}
+                            {% for order in orders_by_status.4.orders %}
+                            <div class="order-card" data-order-id="{{ order.id }}">
+                                <div class="order-header">
+                                    <span class="order-id">#{{ order.id }}</span>
+                                    <span class="order-total">R$ {{ order.total|floatformat:2 }}</span>
+                                </div>
+                                <div class="order-customer">
+                                    <strong>{{ order.cliente.nome }}</strong>
+                                    {% if order.cliente.telefone %}
+                                    <br><small>{{ order.cliente.telefone }}</small>
+                                    {% endif %}
+                                </div>
+                                {% if order.items %}
+                                <div class="order-items">
+                                    {% for item in order.items %}
+                                    <div>{{ item.quantidade }}x {{ item.produto_nome }}</div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="order-timestamp">
+                                    {{ order.criado_em|date:"d/m/Y H:i" }}
+                                </div>
+                                <div class="order-actions">
+                                    <button class="btn-advance" onclick="advanceOrder({{ order.id }})">
+                                        Enviar para Entrega
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                        <div class="empty-column">
+                            Nenhum pedido pronto
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Sendo Entregue Column -->
+                <div class="kanban-column">
+                    <div class="kanban-column-header being-delivered">
+                        Sendo Entregue ({{ orders_by_status.5.total|default:0 }})
+                    </div>
+                    <div class="order-cards-container">
+                        {% if orders_by_status.5.orders %}
+                            {% for order in orders_by_status.5.orders %}
+                            <div class="order-card" data-order-id="{{ order.id }}">
+                                <div class="order-header">
+                                    <span class="order-id">#{{ order.id }}</span>
+                                    <span class="order-total">R$ {{ order.total|floatformat:2 }}</span>
+                                </div>
+                                <div class="order-customer">
+                                    <strong>{{ order.cliente.nome }}</strong>
+                                    {% if order.cliente.telefone %}
+                                    <br><small>{{ order.cliente.telefone }}</small>
+                                    {% endif %}
+                                </div>
+                                {% if order.items %}
+                                <div class="order-items">
+                                    {% for item in order.items %}
+                                    <div>{{ item.quantidade }}x {{ item.produto_nome }}</div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <div class="order-timestamp">
+                                    {{ order.criado_em|date:"d/m/Y H:i" }}
+                                </div>
+                                <div class="order-actions">
+                                    <span class="badge bg-primary">Em entrega</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                        <div class="empty-column">
+                            Nenhum pedido sendo entregue
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dados iniciais para o React -->
+<script type="application/json" id="kanban-initial-data">
+{{ initial_data|safe }}
+</script>
+
+<!-- CSRF Token para requisições AJAX -->
+<script>
+window.csrfToken = '{{ csrf_token }}';
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Função para avançar status do pedido
+async function advanceOrder(orderId) {
+    const button = document.querySelector(`[data-order-id="${orderId}"] .btn-advance`);
+    const originalText = button.textContent;
+    
+    // Mostrar loading
+    button.disabled = true;
+    button.innerHTML = '<span class="loading-spinner"></span> Processando...';
+    
+    try {
+        const response = await fetch(`/api/restaurante/kanban/orders/${orderId}/advance/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': window.csrfToken
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Recarregar a página para mostrar as mudanças
+            window.location.reload();
+        } else {
+            alert('Erro ao avançar pedido: ' + data.error);
+            button.disabled = false;
+            button.textContent = originalText;
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao processar solicitação');
+        button.disabled = false;
+        button.textContent = originalText;
+    }
+}
+
+// Auto-refresh removido - recarregamento manual ou via botões
+
+console.log('Kanban carregado com sucesso!');
+</script>
+{% endblock %}

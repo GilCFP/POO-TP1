@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Restaurante - {% block page_title %}{% endblock %} - Fast Food App{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+            <div class="container-fluid">
+                <span class="navbar-brand">🍳 Painel do Restaurante</span>
+                <div class="navbar-nav">
+                    <a class="nav-link" href="{% url 'restaurante:kanban' %}">Kanban</a>
+                </div>
+            </div>
+        </nav>
+    </div>
+</div>
+
+{% block restaurant_content %}
+{% endblock %}
+{% endblock %}
