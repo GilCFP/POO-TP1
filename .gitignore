@@ -18,7 +18,7 @@ db.sqlite3
 # Arquivos de configuração de IDEs
 .vscode/
 .idea/
-
+.kiro/
 # Arquivos de sistema operacional
 .DS_Store
 Thumbs.db
