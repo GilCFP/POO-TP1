@@ -55,6 +55,14 @@ class Cliente(TimeStampedModel):
         verbose_name="Último Pedido"
     )
     
+    # Restrições alimentares
+    dietary_restrictions = models.ManyToManyField(
+        'produto.RestricaoAlimentar',
+        blank=True,
+        related_name='clientes',
+        verbose_name="Restrições Alimentares"
+    )
+    
     @staticmethod
     def validate_cpf(cpf: str) -> bool:
         """Valida CPF usando algoritmo oficial."""
