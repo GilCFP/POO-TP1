@@ -32,20 +32,54 @@ const OrderSummary = ({
 
   const handleQuantityChange = (itemId, change) => {
     const item = pedido.items.find(i => i.id === itemId);
-    if (!item) return;
+    if (!item) {
+      console.error('Item não encontrado:', itemId);
+      return;
+    }
 
     const newQuantity = item.quantidade + change;
     if (newQuantity >= 1) {
-      onUpdateQuantity(itemId, newQuantity);
+      // Buscar o produto_id corretamente
+      const produtoId = item.produto_id || item.produto?.id;
+      console.log('Dados para atualizar quantidade:', { 
+        itemId, 
+        produtoId, 
+        newQuantity, 
+        pedidoId: pedido.id,
+        item,
+        produto: item.produto
+      });
+      
+      // Verificar se todos os dados necessários estão presentes
+      if (!pedido.id || !produtoId || newQuantity < 1) {
+        console.error('Dados inválidos:', { pedidoId: pedido.id, produtoId, newQuantidade: newQuantity });
+        return;
+      }
+      
+      // Usar produto_id correto para a API
+      onUpdateQuantity(produtoId, newQuantity);
     }
   };
 
   const handleRemove = (itemId) => {
     const item = pedido.items.find(i => i.id === itemId);
-    if (!item) return;
+    if (!item) {
+      console.error('Item não encontrado:', itemId);
+      return;
+    }
 
-    if (confirm(`Remover "${item.produto?.nome}" do pedido?`)) {
-      onRemoveItem(itemId);
+    if (confirm(`Remover "${item.produto?.nome || 'item'}" do pedido?`)) {
+      // Buscar o produto_id corretamente
+      const produtoId = item.produto_id || item.produto?.id;
+      console.log('Removendo item:', { itemId, produtoId, item });
+      
+      if (!produtoId) {
+        console.error('produto_id não encontrado:', item);
+        return;
+      }
+      
+      // Usar produto_id correto para a API
+      onRemoveItem(produtoId);
     }
   };
 
@@ -72,7 +106,7 @@ const OrderSummary = ({
             ) : (
               <div className="text-center text-muted py-3">
                 <p>🛒 Carrinho vazio</p>
-                <a href="/cardapio" className="btn btn-outline-primary btn-sm">
+                <a href="/produtos/" className="btn btn-outline-primary btn-sm">
                   Adicionar Itens
                 </a>
               </div>
@@ -101,7 +135,7 @@ const OrderSummary = ({
         {/* Ações */}
         <div className="card-footer bg-light">
           <a 
-            href="/cardapio" 
+            href="/produtos/" 
             className="btn btn-outline-secondary w-100 mb-2"
           >
             ➕ Adicionar Mais Itens

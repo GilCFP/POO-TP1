@@ -133,9 +133,9 @@ const StatusApp = ({ statusData, csrfToken }) => {
           {pedido.items?.length > 0 ? (
             pedido.items.map((item, index) => (
               <div key={index} className="order-item">
-                <span className="item-name">{item.produto?.nome || 'Produto'}</span>
-                <span className="item-quantity">x{item.quantity || 1}</span>
-                <span className="item-price">R$ {(item.price || 0).toFixed(2)}</span>
+                <span className="item-name">{item.produto?.nome || item.produto_nome || 'Produto'}</span>
+                <span className="item-quantity">x{item.quantidade || 1}</span>
+                <span className="item-price">R$ {(item.subtotal || item.price || 0).toFixed(2)}</span>
               </div>
             ))
           ) : (

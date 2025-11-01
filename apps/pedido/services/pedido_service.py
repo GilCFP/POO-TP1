@@ -330,6 +330,22 @@ class PedidoService:
         except Pedido.DoesNotExist:
             raise ValidationError("Pedido não encontrado")
         
+        # Criar lista de itens com estrutura correta para o frontend
+        items = []
+        for item_pedido in pedido.itempedido_set.select_related('produto').all():
+            items.append({
+                'id': item_pedido.id,  # ID do ItemPedido
+                'produto_id': item_pedido.produto.id,  # ID do Produto
+                'produto': {
+                    'id': item_pedido.produto.id,
+                    'nome': item_pedido.produto.name,
+                    'descricao': getattr(item_pedido.produto, 'description', '')
+                },
+                'quantidade': item_pedido.quantidade,
+                'price': float(item_pedido.unit_price),
+                'subtotal': float(item_pedido.subtotal)
+            })
+        
         return {
             'id': pedido.id,
             'cliente': {
@@ -341,8 +357,8 @@ class PedidoService:
                 'codigo': pedido.status,
                 'nome': pedido.get_status_display()
             },
-            'itens': pedido.get_items_summary(),
-            'total': float(pedido.total_price),
+            'items': items,  # Use 'items' ao invés de 'itens' para consistência com frontend
+            'total_price': float(pedido.total_price),  # Use 'total_price' para consistência
             'endereco_entrega': pedido.delivery_address,
             'tempo_estimado_entrega': pedido.estimated_delivery_time,
             'metodo_pagamento': pedido.payment_method,

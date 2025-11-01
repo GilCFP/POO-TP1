@@ -1,4 +1,4 @@
-import { useState, useCallback, useContext, createContext } from 'react';
+import { useState, useCallback, useContext, createContext, useEffect } from 'react';
 import { pedidoService } from '../services/pedidoService';
 import { AuthUtils } from '@shared/services/api';
 
@@ -14,6 +14,25 @@ export const CarrinhoProvider = ({ children, csrfToken }) => {
   const [pedidoAtivo, setPedidoAtivo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Carrega pedido ativo automaticamente quando o provider é montado
+  useEffect(() => {
+    const carregarPedidoInicial = async () => {
+      try {
+        setLoading(true);
+        const pedido = await pedidoService.obterPedidoAtivo();
+        setPedidoAtivo(pedido);
+      } catch (err) {
+        console.error('Erro ao carregar pedido inicial:', err);
+        // Se não conseguir carregar, cria um pedido vazio para permitir adicionar itens
+        setPedidoAtivo({ items: [], itens: [], total: 0, total_price: 0 });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    carregarPedidoInicial();
+  }, []);
 
   const value = {
     pedidoAtivo,
@@ -60,7 +79,9 @@ export const useCarrinho = () => {
       setLoading(true);
       setError(null);
       
+      console.log('CarregarPedidoAtivo - Iniciando...');
       const pedido = await pedidoService.obterPedidoAtivo();
+      console.log('CarregarPedidoAtivo - Resultado:', pedido);
       setPedidoAtivo(pedido);
       
       return pedido;
@@ -77,12 +98,15 @@ export const useCarrinho = () => {
    * Adiciona produto ao carrinho
    */
   const adicionarProduto = useCallback(async (produtoId, quantidade = 1, instrucoesEspeciais = '') => {
+    console.log('AdicionarProduto - Iniciando:', { produtoId, quantidade });
     try {
       setLoading(true);
       setError(null);
 
       // Verifica se usuário está autenticado
       const isAuthenticated = AuthUtils.isAuthenticated();
+      console.log('AdicionarProduto - Autenticado:', isAuthenticated);
+      
       if (!isAuthenticated) {
         // Redireciona para login
         const currentUrl = window.location.pathname;
@@ -96,25 +120,36 @@ export const useCarrinho = () => {
 
       // Obtém ou cria pedido ativo
       let pedido = pedidoAtivo;
+      console.log('AdicionarProduto - Pedido atual:', pedido);
+      
       if (!pedido) {
+        console.log('AdicionarProduto - Criando novo pedido...');
         pedido = await pedidoService.obterOuCriarPedidoAtivo(csrfToken);
         if (!pedido) {
           throw new Error('Não foi possível criar pedido');
         }
+        console.log('AdicionarProduto - Novo pedido criado:', pedido);
         setPedidoAtivo(pedido);
       }
 
+      // Determinar o ID do pedido corretamente
+      const pedidoId = pedido.pedido?.id || pedido.id;
+      console.log('AdicionarProduto - Usando pedidoId:', pedidoId);
+
       // Adiciona item ao pedido
       const response = await pedidoService.adicionarItem(
-        pedido.pedido.id,
+        pedidoId,
         produtoId,
         quantidade,
         instrucoesEspeciais,
         csrfToken
       );
 
+      console.log('AdicionarProduto - Resposta da API:', response);
+
       if (response.success) {
         // Atualiza pedido local
+        console.log('AdicionarProduto - Sucesso! Recarregando pedido ativo...');
         await carregarPedidoAtivo();
         return {
           success: true,
@@ -147,7 +182,7 @@ export const useCarrinho = () => {
       setError(null);
 
       const response = await pedidoService.removerItem(
-        pedidoAtivo.pedido.id,
+        pedidoAtivo.pedido?.id || pedidoAtivo.id,
         produtoId,
         csrfToken
       );
@@ -184,7 +219,7 @@ export const useCarrinho = () => {
       setError(null);
 
       const response = await pedidoService.atualizarQuantidadeItem(
-        pedidoAtivo.pedido.id,
+        pedidoAtivo.pedido?.id || pedidoAtivo.id,
         produtoId,
         novaQuantidade,
         csrfToken
@@ -222,7 +257,7 @@ export const useCarrinho = () => {
       setError(null);
 
       const response = await pedidoService.finalizarPedido(
-        pedidoAtivo.pedido.id,
+        pedidoAtivo.pedido?.id || pedidoAtivo.id,
         csrfToken
       );
 
@@ -259,7 +294,7 @@ export const useCarrinho = () => {
       setError(null);
 
       const response = await pedidoService.cancelarPedido(
-        pedidoAtivo.pedido.id,
+        pedidoAtivo.pedido?.id || pedidoAtivo.id,
         motivo,
         csrfToken
       );
@@ -288,12 +323,16 @@ export const useCarrinho = () => {
   /**
    * Calcula total de itens no carrinho
    */
-  const totalItens = pedidoAtivo?.pedido?.itens?.reduce((total, item) => total + item.quantidade, 0) || 0;
+  const totalItens = pedidoAtivo?.pedido?.items?.reduce((total, item) => total + item.quantidade, 0) || 
+                     pedidoAtivo?.pedido?.itens?.reduce((total, item) => total + item.quantidade, 0) ||
+                     pedidoAtivo?.items?.reduce((total, item) => total + item.quantidade, 0) ||
+                     pedidoAtivo?.itens?.reduce((total, item) => total + item.quantidade, 0) || 0;
 
   /**
    * Calcula valor total do carrinho
    */
-  const valorTotal = pedidoAtivo?.pedido?.total || 0;
+  const valorTotal = pedidoAtivo?.pedido?.total_price || pedidoAtivo?.pedido?.total || 
+                     pedidoAtivo?.total_price || pedidoAtivo?.total || 0;
 
   /**
    * Verifica se carrinho está vazio

@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.views.generic import TemplateView
+from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
@@ -8,6 +9,7 @@ from django.utils.decorators import method_decorator
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.db import transaction, IntegrityError
 from django.conf import settings
+from datetime import date, timedelta
 import json
 import logging
 
@@ -567,3 +569,167 @@ class KanbanAdvanceStatusAPIView(BaseKanbanAPIView):
 # Placeholder views - implementar conforme necessário
 def restaurante_list(request):
     return JsonResponse({'message': 'Restaurante list view'})
+
+
+# Dashboard Views
+from .service.dashboard_service import DashboardService
+
+
+class DashboardView(TemplateView):
+    """Página principal do dashboard de vendas."""
+    template_name = 'restaurante/dashboard.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'page_title': 'Dashboard de Vendas',
+            'section': 'dashboard'
+        })
+        return context
+
+
+class DashboardAPIView(View):
+    """API para métricas gerais do dashboard."""
+    
+    def get(self, request):
+        """Retorna métricas completas do dashboard."""
+        try:
+            # Parâmetros padrão: últimos 7 dias, restaurante_id=1
+            days = int(request.GET.get('days', 7))
+            restaurante_id = int(request.GET.get('restaurante_id', 1))
+            
+            # Validar parâmetros
+            if days <= 0 or days > 365:
+                return JsonResponse({
+                    'error': 'Parâmetro "days" deve estar entre 1 e 365'
+                }, status=400)
+            
+            # Calcular período
+            end_date = date.today()
+            start_date = end_date - timedelta(days=days)
+            
+            # Buscar dados usando o DashboardService
+            service = DashboardService(start_date, end_date, restaurante_id)
+            data = service.get_all_dashboard_data()
+            
+            return JsonResponse({
+                'success': True,
+                'data': data,
+                'timestamp': timezone.now().isoformat()
+            })
+            
+        except ValueError as e:
+            return JsonResponse({
+                'error': f'Parâmetros inválidos: {str(e)}'
+            }, status=400)
+        except Exception as e:
+            logger.error(f"Erro ao buscar métricas do dashboard: {str(e)}", exc_info=True)
+            return JsonResponse({
+                'error': 'Erro interno do servidor',
+                'details': str(e) if settings.DEBUG else None
+            }, status=500)
+
+
+class SalesChartAPIView(View):
+    """API para dados do gráfico de vendas."""
+    
+    def get(self, request):
+        """Retorna dados para o gráfico de vendas por hora."""
+        try:
+            # Parâmetros
+            days = int(request.GET.get('days', 7))
+            restaurante_id = int(request.GET.get('restaurante_id', 1))
+            
+            # Validar parâmetros
+            if days <= 0 or days > 365:
+                return JsonResponse({
+                    'error': 'Parâmetro "days" deve estar entre 1 e 365'
+                }, status=400)
+            
+            # Calcular período
+            end_date = date.today()
+            start_date = end_date - timedelta(days=days)
+            
+            # Buscar dados
+            service = DashboardService(start_date, end_date, restaurante_id)
+            sales_data = service.get_sales_by_hour()
+            
+            return JsonResponse({
+                'success': True,
+                'data': {
+                    'sales_by_hour': sales_data,
+                    'period': {
+                        'start_date': start_date.isoformat(),
+                        'end_date': end_date.isoformat(),
+                        'days': days
+                    }
+                },
+                'timestamp': timezone.now().isoformat()
+            })
+            
+        except ValueError as e:
+            return JsonResponse({
+                'error': f'Parâmetros inválidos: {str(e)}'
+            }, status=400)
+        except Exception as e:
+            logger.error(f"Erro ao buscar dados do gráfico: {str(e)}", exc_info=True)
+            return JsonResponse({
+                'error': 'Erro interno do servidor',
+                'details': str(e) if settings.DEBUG else None
+            }, status=500)
+
+
+class TopProductsAPIView(View):
+    """API para produtos mais vendidos."""
+    
+    def get(self, request):
+        """Retorna os produtos mais vendidos no período."""
+        try:
+            # Parâmetros
+            days = int(request.GET.get('days', 7))
+            restaurante_id = int(request.GET.get('restaurante_id', 1))
+            limit = int(request.GET.get('limit', 5))
+            
+            # Validar parâmetros
+            if days <= 0 or days > 365:
+                return JsonResponse({
+                    'error': 'Parâmetro "days" deve estar entre 1 e 365'
+                }, status=400)
+            
+            if limit <= 0 or limit > 50:
+                return JsonResponse({
+                    'error': 'Parâmetro "limit" deve estar entre 1 e 50'
+                }, status=400)
+            
+            # Calcular período
+            end_date = date.today()
+            start_date = end_date - timedelta(days=days)
+            
+            # Buscar dados
+            service = DashboardService(start_date, end_date, restaurante_id)
+            top_products = service.get_top_selling_products(limit)
+            
+            return JsonResponse({
+                'success': True,
+                'data': {
+                    'top_products': top_products,
+                    'period': {
+                        'start_date': start_date.isoformat(),
+                        'end_date': end_date.isoformat(),
+                        'days': days
+                    },
+                    'limit': limit
+                },
+                'timestamp': timezone.now().isoformat()
+            })
+            
+        except ValueError as e:
+            return JsonResponse({
+                'error': f'Parâmetros inválidos: {str(e)}'
+            }, status=400)
+        except Exception as e:
+            logger.error(f"Erro ao buscar top produtos: {str(e)}", exc_info=True)
+            return JsonResponse({
+                'error': 'Erro interno do servidor',
+                'details': str(e) if settings.DEBUG else None
+            }, status=500)

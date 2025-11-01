@@ -1,0 +1,872 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title|default:"Dashboard de Vendas" }} - Sistema Restaurante{% endblock %}
+
+{% block extra_css %}
+<!-- TailwindCSS via CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: {
+          primary: '#3b82f6',
+          success: '#10b981',
+          warning: '#f59e0b',
+          danger: '#ef4444'
+        }
+      }
+    }
+  }
+</script>
+{% endblock %}
+
+{% block content %}
+<!-- Container principal - Tema claro -->
+<div class="min-h-screen bg-gray-50 text-gray-900">
+    <!-- Dashboard React App -->
+    <div id="dashboard-root" class="p-6">
+        <!-- Loading inicial -->
+        <div class="flex items-center justify-center h-64">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+            <span class="ml-3 text-xl text-gray-700">Carregando dashboard...</span>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts via CDN -->
+<!-- React -->
+<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Lucide Icons via CDN -->
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+<!-- Babel para JSX -->
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<!-- CSRF Token para JavaScript -->
+<script>
+  window.CSRF_TOKEN = '{{ csrf_token }}';
+</script>
+
+<!-- Dashboard React App -->
+{% verbatim %}
+<script type="text/babel">
+  const { useState, useEffect, useMemo } = React;
+
+  // Configuração global
+  window.DASHBOARD_CONFIG = {
+    apiBaseUrl: '/api/restaurante/dashboard/metrics/',
+    salesChartUrl: '/api/restaurante/dashboard/sales-chart/',
+    topProductsUrl: '/api/restaurante/dashboard/top-products/',
+    csrfToken: window.CSRF_TOKEN || ''
+  };
+
+  // Função Mock para simular API
+  const fetchDashboardData = (period, customDateRange = null) => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        // Simular 5% de chance de erro
+        if (Math.random() < 0.05) {
+          reject(new Error('Erro de conexão com o servidor'));
+          return;
+        }
+
+        // Gerar dados para período personalizado
+        if (customDateRange) {
+          const start = new Date(customDateRange.start);
+          const end = new Date(customDateRange.end);
+          const diffDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+          
+          // Gerar dados baseados no tamanho do período
+          const labels = [];
+          const salesData = [];
+          
+          for (let i = 0; i < Math.min(diffDays, 30); i++) {
+            const date = new Date(start);
+            date.setDate(start.getDate() + i);
+            labels.push(date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
+            salesData.push(Math.floor(Math.random() * 3000) + 1000);
+          }
+          
+          const totalSales = salesData.reduce((sum, val) => sum + val, 0);
+          const avgOrders = Math.floor(diffDays * 15 + Math.random() * 100);
+          
+          return resolve({
+            metrics: {
+              totalSales: { value: totalSales, comparison: Math.floor(Math.random() * 30) - 15 },
+              totalOrders: { value: avgOrders, comparison: Math.floor(Math.random() * 20) - 10 },
+              averageTicket: { value: totalSales / avgOrders, comparison: Math.floor(Math.random() * 25) - 12.5 },
+              averagePreparationTime: { value: Math.floor(Math.random() * 20) + 15, comparison: Math.floor(Math.random() * 10) - 5 }
+            },
+            salesChart: {
+              labels: labels,
+              datasets: [{
+                label: "Vendas (R$)",
+                data: salesData,
+                backgroundColor: "rgba(59, 130, 246, 0.5)",
+                borderColor: "rgba(59, 130, 246, 1)",
+                tension: 0.1
+              }]
+            },
+            ordersPerHour: {
+              labels: ["00h", "01h", "02h", "03h", "04h", "05h", "06h", "07h", "08h", "09h", "10h", "11h", "12h", "13h", "14h", "15h", "16h", "17h", "18h", "19h", "20h", "21h", "22h", "23h"],
+              datasets: [{
+                label: "Média de Pedidos por Hora",
+                data: [2, 1, 0, 0, 1, 2, 5, 8, 12, 15, 18, 25, 35, 28, 22, 18, 15, 20, 30, 32, 25, 18, 12, 8],
+                backgroundColor: "rgba(34, 197, 94, 0.5)",
+                borderColor: "rgba(34, 197, 94, 1)",
+                borderWidth: 1
+              }]
+            },
+            topProducts: [
+              { id: 1, name: "Hamburguer Clássico", quantity: Math.floor(Math.random() * 200) + 50, revenue: Math.floor(Math.random() * 5000) + 2000 },
+              { id: 2, name: "Pizza Margherita", quantity: Math.floor(Math.random() * 150) + 40, revenue: Math.floor(Math.random() * 4000) + 1800 },
+              { id: 3, name: "Batata Frita G", quantity: Math.floor(Math.random() * 300) + 100, revenue: Math.floor(Math.random() * 3000) + 1500 },
+              { id: 4, name: "Refrigerante Lata", quantity: Math.floor(Math.random() * 400) + 150, revenue: Math.floor(Math.random() * 2000) + 800 },
+              { id: 5, name: "Brownie de Chocolate", quantity: Math.floor(Math.random() * 100) + 30, revenue: Math.floor(Math.random() * 1500) + 500 }
+            ]
+          });
+        }
+
+        // Dados mock baseados no período
+        const mockData = {
+          '7d': {
+            metrics: {
+              totalSales: { value: 15750.80, comparison: 12.5 },
+              totalOrders: { value: 310, comparison: -2.1 },
+              averageTicket: { value: 50.81, comparison: 14.8 },
+              averagePreparationTime: { value: 18, comparison: -5.2 }
+            },
+            salesChart: {
+              labels: ["01/11", "02/11", "03/11", "04/11", "05/11", "06/11", "07/11"],
+              datasets: [{
+                label: "Vendas (R$)",
+                data: [1200, 1900, 1500, 2100, 1800, 2300, 2000],
+                backgroundColor: "rgba(59, 130, 246, 0.5)",
+                borderColor: "rgba(59, 130, 246, 1)",
+                tension: 0.1
+              }]
+            },
+            ordersPerHour: {
+              labels: ["00h", "01h", "02h", "03h", "04h", "05h", "06h", "07h", "08h", "09h", "10h", "11h", "12h", "13h", "14h", "15h", "16h", "17h", "18h", "19h", "20h", "21h", "22h", "23h"],
+              datasets: [{
+                label: "Média de Pedidos por Hora",
+                data: [3, 1, 0, 0, 1, 3, 7, 12, 18, 22, 25, 32, 45, 38, 30, 25, 20, 28, 40, 42, 35, 25, 18, 12],
+                backgroundColor: "rgba(34, 197, 94, 0.5)",
+                borderColor: "rgba(34, 197, 94, 1)",
+                borderWidth: 1
+              }]
+            },
+            topProducts: [
+              { id: 1, name: "Hamburguer Clássico", quantity: 120, revenue: 3000.00 },
+              { id: 2, name: "Pizza Margherita", quantity: 95, revenue: 3325.00 },
+              { id: 3, name: "Batata Frita G", quantity: 150, revenue: 2250.00 },
+              { id: 4, name: "Refrigerante Lata", quantity: 210, revenue: 1050.00 },
+              { id: 5, name: "Brownie de Chocolate", quantity: 70, revenue: 980.00 }
+            ]
+          },
+          '30d': {
+            metrics: {
+              totalSales: { value: 68420.50, comparison: 8.3 },
+              totalOrders: { value: 1247, comparison: 5.7 },
+              averageTicket: { value: 54.87, comparison: 2.4 },
+              averagePreparationTime: { value: 22, comparison: 3.1 }
+            },
+            salesChart: {
+              labels: ["Sem 1", "Sem 2", "Sem 3", "Sem 4"],
+              datasets: [{
+                label: "Vendas (R$)",
+                data: [15200, 18400, 16800, 18020],
+                backgroundColor: "rgba(59, 130, 246, 0.5)",
+                borderColor: "rgba(59, 130, 246, 1)",
+                tension: 0.1
+              }]
+            },
+            ordersPerHour: {
+              labels: ["00h", "01h", "02h", "03h", "04h", "05h", "06h", "07h", "08h", "09h", "10h", "11h", "12h", "13h", "14h", "15h", "16h", "17h", "18h", "19h", "20h", "21h", "22h", "23h"],
+              datasets: [{
+                label: "Média de Pedidos por Hora",
+                data: [2, 1, 0, 0, 1, 2, 5, 8, 12, 15, 18, 25, 35, 28, 22, 18, 15, 20, 30, 32, 25, 18, 12, 8],
+                backgroundColor: "rgba(34, 197, 94, 0.5)",
+                borderColor: "rgba(34, 197, 94, 1)",
+                borderWidth: 1
+              }]
+            },
+            topProducts: [
+              { id: 1, name: "Pizza Margherita", quantity: 387, revenue: 13545.00 },
+              { id: 2, name: "Hamburguer Clássico", quantity: 456, revenue: 11400.00 },
+              { id: 3, name: "Batata Frita G", quantity: 623, revenue: 9345.00 },
+              { id: 4, name: "Refrigerante Lata", quantity: 892, revenue: 4460.00 },
+              { id: 5, name: "Brownie de Chocolate", quantity: 234, revenue: 3276.00 }
+            ]
+          },
+          '90d': {
+            metrics: {
+              totalSales: { value: 195650.75, comparison: -3.2 },
+              totalOrders: { value: 3892, comparison: -5.1 },
+              averageTicket: { value: 50.29, comparison: 2.1 },
+              averagePreparationTime: { value: 25, comparison: 8.7 }
+            },
+            salesChart: {
+              labels: ["Ago", "Set", "Out"],
+              datasets: [{
+                label: "Vendas (R$)",
+                data: [62400, 68200, 65050],
+                backgroundColor: "rgba(59, 130, 246, 0.5)",
+                borderColor: "rgba(59, 130, 246, 1)",
+                tension: 0.1
+              }]
+            },
+            ordersPerHour: {
+              labels: ["00h", "01h", "02h", "03h", "04h", "05h", "06h", "07h", "08h", "09h", "10h", "11h", "12h", "13h", "14h", "15h", "16h", "17h", "18h", "19h", "20h", "21h", "22h", "23h"],
+              datasets: [{
+                label: "Média de Pedidos por Hora",
+                data: [1, 0, 0, 0, 0, 1, 3, 6, 10, 14, 16, 22, 30, 24, 19, 16, 13, 18, 26, 28, 22, 16, 10, 6],
+                backgroundColor: "rgba(34, 197, 94, 0.5)",
+                borderColor: "rgba(34, 197, 94, 1)",
+                borderWidth: 1
+              }]
+            },
+            topProducts: [
+              { id: 1, name: "Hamburguer Clássico", quantity: 1234, revenue: 30850.00 },
+              { id: 2, name: "Pizza Margherita", quantity: 1089, revenue: 38115.00 },
+              { id: 3, name: "Batata Frita G", quantity: 1567, revenue: 23505.00 },
+              { id: 4, name: "Refrigerante Lata", quantity: 2341, revenue: 11705.00 },
+              { id: 5, name: "Brownie de Chocolate", quantity: 678, revenue: 9492.00 }
+            ]
+          }
+        };
+
+        resolve(mockData[period] || mockData['7d']);
+      }, 1000 + Math.random() * 1000); // 1-2 segundos de delay
+    });
+  };
+
+  // Hook customizado para dados do dashboard
+  const useDashboardData = (period, customDateRange = null) => {
+    const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+      const loadData = async () => {
+        setLoading(true);
+        setError(null);
+        
+        try {
+          const result = await fetchDashboardData(period, customDateRange);
+          setData(result);
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      loadData();
+    }, [period, customDateRange]);
+
+    const refetch = () => {
+      setLoading(true);
+      setError(null);
+      fetchDashboardData(period, customDateRange)
+        .then(setData)
+        .catch(err => setError(err.message))
+        .finally(() => setLoading(false));
+    };
+
+    return { data, loading, error, refetch };
+  };
+
+  // Componente de Spinner de Loading
+  const LoadingSpinner = () => (
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+  );
+
+  // Componente de Card Skeleton
+  const CardSkeleton = () => (
+    <div className="bg-white rounded-lg p-6 animate-pulse border border-gray-200 shadow-sm">
+      <div className="h-4 bg-gray-300 rounded w-1/2 mb-4"></div>
+      <div className="h-8 bg-gray-300 rounded w-3/4 mb-2"></div>
+      <div className="h-3 bg-gray-300 rounded w-1/3"></div>
+    </div>
+  );
+
+  // Componente de Filtro de Período com Date Picker
+  const PeriodFilter = ({ selectedPeriod, onPeriodChange, onDateRangeChange, customDateRange }) => {
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+
+    const periods = [
+      { key: 'custom', label: 'Período Personalizado' },
+      { key: '7d', label: 'Últimos 7 dias' },
+      { key: '30d', label: 'Este Mês' },
+      { key: '90d', label: 'Últimos 3 meses' }
+    ];
+
+    const handleDateSubmit = () => {
+      if (startDate && endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        
+        if (start <= end) {
+          onDateRangeChange({ start: startDate, end: endDate });
+          setShowDatePicker(false);
+        } else {
+          alert('Data de início deve ser anterior ou igual à data final');
+        }
+      }
+    };
+
+    const handlePeriodClick = (periodKey) => {
+      if (periodKey === 'custom') {
+        setShowDatePicker(!showDatePicker);
+      } else {
+        setShowDatePicker(false);
+        onPeriodChange(periodKey);
+      }
+    };
+
+    // Definir datas padrão baseadas no período atual
+    useEffect(() => {
+      const today = new Date();
+      const formatDate = (date) => date.toISOString().split('T')[0];
+      
+      if (selectedPeriod === '7d') {
+        setEndDate(formatDate(today));
+        setStartDate(formatDate(new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)));
+      } else if (selectedPeriod === '30d') {
+        setEndDate(formatDate(today));
+        setStartDate(formatDate(new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000)));
+      } else if (selectedPeriod === '90d') {
+        setEndDate(formatDate(today));
+        setStartDate(formatDate(new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000)));
+      }
+    }, [selectedPeriod]);
+
+    return (
+      <div className="mb-6">
+        <div className="flex flex-wrap gap-2 mb-4">
+          {periods.map(period => (
+            <button
+              key={period.key}
+              onClick={() => handlePeriodClick(period.key)}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                (selectedPeriod === period.key) || (period.key === 'custom' && customDateRange)
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+              }`}
+            >
+              {period.key === 'custom' ? '📅 ' + period.label : period.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Date Picker Modal */}
+        {showDatePicker && (
+          <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-lg">
+            <h4 className="text-lg font-semibold text-gray-900 mb-4">Selecionar Período</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Data de Início
+                </label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Data Final
+                </label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleDateSubmit}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                Aplicar
+              </button>
+              <button
+                onClick={() => setShowDatePicker(false)}
+                className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Mostrar período customizado selecionado */}
+        {customDateRange && (
+          <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-700">
+              📅 Período selecionado: {new Date(customDateRange.start).toLocaleDateString('pt-BR')} - {new Date(customDateRange.end).toLocaleDateString('pt-BR')}
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Componente de Card de Métrica
+  const MetricCard = ({ title, value, comparison, icon, format = 'currency' }) => {
+    const formatValue = (val) => {
+      if (format === 'currency') {
+        return new Intl.NumberFormat('pt-BR', {
+          style: 'currency',
+          currency: 'BRL'
+        }).format(val);
+      } else if (format === 'time') {
+        return `${Math.round(val)} min`;
+      }
+      return val.toLocaleString('pt-BR');
+    };
+
+    const isPositive = comparison > 0;
+    const ComparisonIcon = isPositive ? '↗' : '↘';
+
+    return (
+      <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-gray-600 text-sm font-medium uppercase">{title}</h3>
+          <span className="text-2xl">{icon}</span>
+        </div>
+        <div className="text-3xl font-bold text-gray-900 mb-2">
+          {formatValue(value)}
+        </div>
+        <div className={`text-sm flex items-center ${
+          isPositive ? 'text-green-600' : 'text-red-600'
+        }`}>
+          <span className="mr-1">{ComparisonIcon}</span>
+          {Math.abs(comparison).toFixed(1)}% vs período anterior
+          <button 
+            className="ml-2 text-gray-400 hover:text-gray-600 text-xs"
+            onClick={() => alert(`Cálculo de Desempenho:\n\nPara calcular a variação percentual em relação ao período anterior:\n\n1. Período Atual: ${formatValue(value)}\n2. Período Anterior: ${formatValue(value / (1 + comparison/100))}\n3. Fórmula: ((Atual - Anterior) / Anterior) × 100\n4. Resultado: ${comparison > 0 ? '+' : ''}${comparison.toFixed(1)}%\n\nEste indicador mostra se houve crescimento (↗ verde) ou queda (↘ vermelho) em relação ao mesmo período anterior.`)}
+            title="Como é calculado?"
+          >
+            ❓
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // Componente de Métricas do Dashboard
+  const DashboardMetrics = ({ data, loading }) => {
+    if (loading) {
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
+      );
+    }
+
+    if (!data?.metrics) {
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-lg p-6 text-center text-gray-500 border border-gray-200">
+            Sem dados de métricas
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <MetricCard
+          title="Vendas Totais"
+          value={data.metrics.totalSales.value}
+          comparison={data.metrics.totalSales.comparison}
+          icon="💰"
+          format="currency"
+        />
+        <MetricCard
+          title="Total de Pedidos"
+          value={data.metrics.totalOrders.value}
+          comparison={data.metrics.totalOrders.comparison}
+          icon="📦"
+          format="number"
+        />
+        <MetricCard
+          title="Ticket Médio"
+          value={data.metrics.averageTicket.value}
+          comparison={data.metrics.averageTicket.comparison}
+          icon="🎯"
+          format="currency"
+        />
+        <MetricCard
+          title="Tempo Médio de Preparo"
+          value={data.metrics.averagePreparationTime.value}
+          comparison={data.metrics.averagePreparationTime.comparison}
+          icon="⏱️"
+          format="time"
+        />
+      </div>
+    );
+  };
+
+  // Componente de Gráfico de Vendas
+  const SalesChart = ({ data, loading }) => {
+    const chartRef = React.useRef(null);
+    const chartInstance = React.useRef(null);
+
+    useEffect(() => {
+      if (loading || !data?.salesChart || !chartRef.current) return;
+
+      // Destruir gráfico anterior se existir
+      if (chartInstance.current) {
+        chartInstance.current.destroy();
+      }
+
+      const ctx = chartRef.current.getContext('2d');
+      
+      chartInstance.current = new Chart(ctx, {
+        type: 'line',
+        data: data.salesChart,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: {
+                color: '#374151'
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: {
+                color: '#6b7280'
+              },
+              grid: {
+                color: '#e5e7eb'
+              }
+            },
+            y: {
+              beginAtZero: true,
+              ticks: {
+                color: '#6b7280',
+                callback: function(value) {
+                  return 'R$ ' + value.toLocaleString('pt-BR');
+                }
+              },
+              grid: {
+                color: '#e5e7eb'
+              }
+            }
+          },
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          },
+          elements: {
+            point: {
+              radius: 6,
+              hoverRadius: 8
+            }
+          }
+        }
+      });
+
+      return () => {
+        if (chartInstance.current) {
+          chartInstance.current.destroy();
+        }
+      };
+    }, [data, loading]);
+
+    if (loading) {
+      return (
+        <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+          <h3 className="text-gray-900 text-lg font-semibold mb-4">Evolução das Vendas</h3>
+          <div className="h-64 bg-gray-200 rounded animate-pulse"></div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+        <h3 className="text-gray-900 text-lg font-semibold mb-4">Evolução das Vendas</h3>
+        <div className="h-64 relative">
+          <canvas ref={chartRef}></canvas>
+        </div>
+      </div>
+    );
+  };
+
+  // Componente de Gráfico de Pedidos por Hora
+  const OrdersPerHourChart = ({ data, loading }) => {
+    const chartRef = React.useRef(null);
+    const chartInstance = React.useRef(null);
+
+    useEffect(() => {
+      if (loading || !data?.ordersPerHour || !chartRef.current) return;
+
+      // Destruir gráfico anterior se existir
+      if (chartInstance.current) {
+        chartInstance.current.destroy();
+      }
+
+      const ctx = chartRef.current.getContext('2d');
+      
+      chartInstance.current = new Chart(ctx, {
+        type: 'bar',
+        data: data.ordersPerHour,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: {
+                color: '#374151'
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: {
+                color: '#6b7280'
+              },
+              grid: {
+                color: '#e5e7eb'
+              }
+            },
+            y: {
+              beginAtZero: true,
+              ticks: {
+                color: '#6b7280',
+                callback: function(value) {
+                  return value + ' pedidos';
+                }
+              },
+              grid: {
+                color: '#e5e7eb'
+              }
+            }
+          },
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          }
+        }
+      });
+
+      return () => {
+        if (chartInstance.current) {
+          chartInstance.current.destroy();
+        }
+      };
+    }, [data, loading]);
+
+    if (loading) {
+      return (
+        <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+          <h3 className="text-gray-900 text-lg font-semibold mb-4">Pedidos por Hora do Dia</h3>
+          <div className="h-64 bg-gray-200 rounded animate-pulse"></div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+        <h3 className="text-gray-900 text-lg font-semibold mb-4">Pedidos por Hora do Dia</h3>
+        <p className="text-sm text-gray-600 mb-4">Média de pedidos por hora - identifique os horários de pico</p>
+        <div className="h-64 relative">
+          <canvas ref={chartRef}></canvas>
+        </div>
+      </div>
+    );
+  };
+
+  // Componente de Produtos Mais Vendidos
+  const TopProducts = ({ data, loading }) => {
+    if (loading) {
+      return (
+        <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+          <h3 className="text-gray-900 text-lg font-semibold mb-4">Produtos Mais Vendidos</h3>
+          <div className="space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
+                <div className="h-3 bg-gray-300 rounded w-1/2"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (!data?.topProducts?.length) {
+      return (
+        <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+          <h3 className="text-gray-900 text-lg font-semibold mb-4">Produtos Mais Vendidos</h3>
+          <div className="text-gray-500 text-center py-8">
+            Nenhum produto encontrado
+          </div>
+        </div>
+      );
+    }
+
+    const maxRevenue = Math.max(...data.topProducts.map(p => p.revenue));
+
+    return (
+      <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+        <h3 className="text-gray-900 text-lg font-semibold mb-4">Produtos Mais Vendidos</h3>
+        <div className="space-y-4">
+          {data.topProducts.map((product, index) => {
+            const percentage = (product.revenue / maxRevenue) * 100;
+            
+            return (
+              <div key={product.id} className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <div className="text-gray-900 font-medium">{product.name}</div>
+                    <div className="text-gray-600 text-sm">
+                      {product.quantity} unidades
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-gray-900 font-semibold">
+                      {new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL'
+                      }).format(product.revenue)}
+                    </div>
+                  </div>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-blue-500 h-2 rounded-full transition-all duration-500"
+                    style={{ width: `${percentage}%` }}
+                  ></div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  // Componente de Mensagem de Erro
+  const ErrorMessage = ({ error, onRetry }) => (
+    <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+      <div className="text-red-500 text-xl mb-2">⚠️</div>
+      <h3 className="text-red-700 text-lg font-semibold mb-2">Erro ao Carregar</h3>
+      <p className="text-red-600 mb-4">{error}</p>
+      <button
+        onClick={onRetry}
+        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
+      >
+        Tentar Novamente
+      </button>
+    </div>
+  );
+
+  // Componente Principal do Dashboard
+  const RestauranteDashboard = () => {
+    const [period, setPeriod] = useState('7d');
+    const [customDateRange, setCustomDateRange] = useState(null);
+    const { data, loading, error, refetch } = useDashboardData(period, customDateRange);
+
+    const handleDateRangeChange = (dateRange) => {
+      setCustomDateRange(dateRange);
+      setPeriod('custom');
+    };
+
+    const handlePeriodChange = (newPeriod) => {
+      if (newPeriod !== 'custom') {
+        setCustomDateRange(null);
+      }
+      setPeriod(newPeriod);
+    };
+
+    return (
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard de Vendas</h1>
+            <p className="text-gray-600">Acompanhe o desempenho do seu restaurante</p>
+          </div>
+          <div className="flex gap-3 mt-4 md:mt-0">
+            <button
+              onClick={refetch}
+              disabled={loading}
+              className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+            >
+              {loading ? <LoadingSpinner /> : '🔄'}
+              Atualizar
+            </button>
+            <a
+              href="/restaurante/kanban/"
+              className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors border border-gray-300"
+            >
+              🍳 Kanban da Cozinha
+            </a>
+          </div>
+        </div>
+
+        {/* Filtros de Período */}
+        <PeriodFilter 
+          selectedPeriod={period} 
+          onPeriodChange={handlePeriodChange}
+          onDateRangeChange={handleDateRangeChange}
+          customDateRange={customDateRange}
+        />
+
+        {/* Conteúdo Principal */}
+        {error ? (
+          <ErrorMessage error={error} onRetry={refetch} />
+        ) : (
+          <>
+            {/* Métricas */}
+            <DashboardMetrics data={data} loading={loading} />
+
+            {/* Gráficos Principal */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <SalesChart data={data} loading={loading} />
+              <OrdersPerHourChart data={data} loading={loading} />
+            </div>
+
+            {/* Produtos Mais Vendidos */}
+            <div className="grid grid-cols-1 gap-6">
+              <TopProducts data={data} loading={loading} />
+            </div>
+          </>
+        )}
+      </div>
+    );
+  };
+
+  // Renderizar o Dashboard
+  ReactDOM.render(<RestauranteDashboard />, document.getElementById('dashboard-root'));
+</script>
+{% endverbatim %}
+{% endblock %}
+
+{% block extra_js %}
+<!-- Dashboard já carregado inline -->
+{% endblock %}

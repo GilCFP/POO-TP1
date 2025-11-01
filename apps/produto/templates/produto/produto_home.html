@@ -9,7 +9,14 @@
         <h1>Nosso Cardápio</h1>
         <p class="lead">Explore nossas deliciosas opções!</p>
     </header>
+    
+    <!-- CSRF Token para as requisições AJAX -->
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    
+    <!-- Dados dos produtos em JSON para o React -->
     {{ produtos_data|json_script:"produtos-data" }}
+    
+    <!-- Container onde o React será montado -->
     <div id="cardapio-root">
         <p>Carregando cardápio...</p>
     </div>
@@ -19,8 +26,6 @@
 {% block extra_js %}
     {# Carrega o bundle de bibliotecas compartilhadas (vendor) primeiro #}
     <script src="{% static 'shared/client/vendor.bundle.js' %}"></script>
-    {# Carrega componentes compartilhados #}
-    <script src="{% static 'shared/components.bundle.js' %}"></script>
-    {# Em seguida, carrega o bundle específico da página do cardápio #}
+    {# Em seguida, carrega o bundle específico da página do cardápio (já inclui os componentes) #}
     <script src="{% static 'produto/client/cardapio.bundle.js' %}"></script>
 {% endblock %}

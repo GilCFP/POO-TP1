@@ -16,7 +16,12 @@ export const useCheckout = (initialPedido, csrfToken) => {
    * Atualiza quantidade de um item
    */
   const updateQuantity = useCallback(async (produtoId, newQuantity) => {
-    if (newQuantity < 1 || !pedido) return;
+    if (newQuantity < 1 || !pedido) {
+      console.error('Parâmetros inválidos:', { produtoId, newQuantity, pedido });
+      return;
+    }
+
+    console.log('updateQuantity chamado:', { produtoId, newQuantity, pedidoId: pedido.id });
 
     setLoading(true);
     setError(null);
@@ -27,12 +32,21 @@ export const useCheckout = (initialPedido, csrfToken) => {
         return token ? token.value : csrfToken;
       };
 
+      console.log('Chamando atualizarQuantidadeItem:', {
+        pedidoId: pedido.id,
+        produtoId,
+        newQuantity,
+        csrfToken: getCSRFToken()
+      });
+
       const response = await pedidoService.atualizarQuantidadeItem(
         pedido.id,
         produtoId,
         newQuantity,
         getCSRFToken()
       );
+
+      console.log('Resposta da API:', response);
 
       if (response.success) {
         // Recarregar dados do pedido
@@ -44,6 +58,7 @@ export const useCheckout = (initialPedido, csrfToken) => {
         throw new Error(response.error || 'Erro ao atualizar quantidade');
       }
     } catch (err) {
+      console.error('Erro detalhado:', err);
       setError(err.message);
       console.error('Erro ao atualizar quantidade:', err);
     } finally {
@@ -57,6 +72,8 @@ export const useCheckout = (initialPedido, csrfToken) => {
   const removeItem = useCallback(async (produtoId) => {
     if (!pedido) return;
 
+    console.log('removeItem chamado:', { produtoId, pedidoId: pedido.id });
+
     setLoading(true);
     setError(null);
 
@@ -66,11 +83,19 @@ export const useCheckout = (initialPedido, csrfToken) => {
         return token ? token.value : csrfToken;
       };
 
+      console.log('Chamando removerItem:', {
+        pedidoId: pedido.id,
+        produtoId,
+        csrfToken: getCSRFToken()
+      });
+
       const response = await pedidoService.removerItem(
         pedido.id,
         produtoId,
         getCSRFToken()
       );
+
+      console.log('Resposta do removerItem:', response);
 
       if (response.success) {
         // Recarregar dados do pedido
@@ -82,6 +107,7 @@ export const useCheckout = (initialPedido, csrfToken) => {
         throw new Error(response.error || 'Erro ao remover item');
       }
     } catch (err) {
+      console.error('Erro detalhado ao remover item:', err);
       setError(err.message);
       console.error('Erro ao remover item:', err);
     } finally {
@@ -152,8 +178,10 @@ export const useCheckout = (initialPedido, csrfToken) => {
             `Pagamento: ${paymentMethod === 'card' ? 'Cartão' : paymentMethod === 'pix' ? 'PIX' : 'Dinheiro'}\n` +
             `Total: R$ ${(pedido.total_price || 0).toFixed(2)}`);
       
-      // Redireciona para página de status
-      window.location.href = `/pedidos/${pedido.id}/status/`;
+      // Constrói a URL corretamente e redireciona
+      const statusUrl = `/pedidos/${pedido.id}/status/`;
+      console.log('Redirecionando para:', statusUrl);
+      window.location.href = statusUrl;
       
     } catch (err) {
       setError(err.message || 'Erro ao finalizar pedido. Tente novamente.');
