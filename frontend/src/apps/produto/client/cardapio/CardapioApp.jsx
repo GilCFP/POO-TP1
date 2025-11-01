@@ -1,25 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import AdicionarCarrinhoButton from '../components/AdicionarCarrinhoButton';
 import CarrinhoIndicador from '@pedido/client/components/CarrinhoIndicador';
-import { CarrinhoProvider } from '@pedido/shared/hooks/useCarrinho';
+import { CarrinhoProvider, useCarrinho } from '@pedido/shared/hooks/useCarrinho';
 import './produto.css'; // Importa o CSS para estilização
 
 /**
- * Componente principal que renderiza a lista de produtos do cardápio.
- * @param {object} props
- * @param {Array} props.produtosData - A lista de produtos vinda do Django.
+ * Componente interno do cardápio que usa o hook do carrinho
  */
-const CardapioApp = ({ produtosData }) => {
+const CardapioContent = ({ produtosData }) => {
     const [selectedProduto, setSelectedProduto] = useState(null);
-    const [csrfToken, setCsrfToken] = useState('');
+    const { carregarPedidoAtivo } = useCarrinho();
 
-    // Obtém CSRF token na inicialização
+    // Carrega pedido ativo quando o componente é montado
     useEffect(() => {
-        const tokenElement = document.querySelector('[name=csrfmiddlewaretoken]');
-        if (tokenElement) {
-            setCsrfToken(tokenElement.value);
-        }
-    }, []);
+        carregarPedidoAtivo();
+    }, [carregarPedidoAtivo]);
 
     const handleCardClick = (produto) => {
         setSelectedProduto(produto);
@@ -32,7 +27,6 @@ const CardapioApp = ({ produtosData }) => {
     const handleAdicionadoAoCarrinho = (resultado) => {
         if (resultado.success) {
             console.log('Produto adicionado com sucesso:', resultado);
-            // Fechar modal após adicionar se estiver aberto
             if (selectedProduto) {
                 setSelectedProduto(null);
             }
@@ -45,46 +39,41 @@ const CardapioApp = ({ produtosData }) => {
     };
 
     const handleViewCarrinho = (pedidoAtivo) => {
-        // Redirecionar para página de checkout
         window.location.href = '/pedidos/checkout/';
     };
 
     if (!produtosData || produtosData.length === 0) {
         return (
-            <CarrinhoProvider csrfToken={csrfToken}>
-                <div className="product-container">
-                    <p className="no-products">Nenhum produto disponível no momento. Volte mais tarde!</p>
-                </div>
-            </CarrinhoProvider>
+            <div className="product-container">
+                <p className="no-products">Nenhum produto disponível no momento. Volte mais tarde!</p>
+            </div>
         );
     }
 
     return (
-        <CarrinhoProvider csrfToken={csrfToken}>
-            <div className="product-container">
-                <div className="product-grid">
-                    {produtosData.map(produto => (
-                        <div key={produto.id} className="product-card">
-                            <div className="product-image" onClick={() => handleCardClick(produto)}>
-                                <img 
-                                    src={produto.image_url || 'https://placehold.co/600x400?text=Produto'} 
-                                    alt={produto.name} 
-                                />
-                            </div>
-                            <div className="product-info" onClick={() => handleCardClick(produto)}>
-                                <h2 className="product-name">{produto.name}</h2>
-                                <p className="product-price">R$ {produto.price}</p>
-                            </div>
-                            <div className="product-actions">
-                                <AdicionarCarrinhoButton
-                                    produto={produto}
-                                    onSuccess={handleAdicionadoAoCarrinho}
-                                    onError={handleErroCarrinho}
-                                />
-                            </div>
+        <div className="product-container">
+            <div className="product-grid">
+                {produtosData.map(produto => (
+                    <div key={produto.id} className="product-card">
+                        <div className="product-image" onClick={() => handleCardClick(produto)}>
+                            <img 
+                                src={produto.image_url || 'https://placehold.co/600x400?text=Produto'} 
+                                alt={produto.name} 
+                            />
                         </div>
-                    ))}
-                </div>
+                        <div className="product-info" onClick={() => handleCardClick(produto)}>
+                            <h2 className="product-name">{produto.name}</h2>
+                            <p className="product-price">R$ {produto.price}</p>
+                        </div>
+                        <div className="product-actions">
+                            <AdicionarCarrinhoButton
+                                produto={produto}
+                                onSuccess={handleAdicionadoAoCarrinho}
+                                onError={handleErroCarrinho}
+                            />
+                        </div>
+                    </div>
+                ))}
             </div>
 
             {/* Indicador do carrinho fixo */}
@@ -130,6 +119,31 @@ const CardapioApp = ({ produtosData }) => {
                     </div>
                 </div>
             )}
+        </div>
+    );
+};
+
+/**
+ * Componente principal simplificado
+ */
+const CardapioApp = ({ produtosData }) => {
+    const [csrfToken, setCsrfToken] = useState('');
+
+    console.log('🍔 CardapioApp carregado!', { produtosData });
+
+    useEffect(() => {
+        const tokenElement = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (tokenElement) {
+            setCsrfToken(tokenElement.value);
+            console.log('🔐 CSRF Token encontrado:', tokenElement.value);
+        } else {
+            console.error('❌ CSRF Token não encontrado!');
+        }
+    }, []);
+
+    return (
+        <CarrinhoProvider csrfToken={csrfToken}>
+            <CardapioContent produtosData={produtosData} />
         </CarrinhoProvider>
     );
 };

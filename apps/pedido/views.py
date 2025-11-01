@@ -45,25 +45,27 @@ def checkout_view(request):
             'message': 'Nenhum pedido pendente encontrado'
         }
     else:
-        # Criar estrutura com dados dos items com IDs únicos
+        # Usar a estrutura correta do ItemPedido
         pedido_items = []
-        for i, item in enumerate(pedido.items.all()):
+        for item_pedido in pedido.itempedido_set.select_related('produto').all():
             pedido_items.append({
-                'id': getattr(item, 'id', i + 1),  # Usar ID do item ou índice como fallback
+                'id': item_pedido.id,  # ID do ItemPedido
+                'produto_id': item_pedido.produto.id,  # ID do Produto  
                 'produto': {
-                    'nome': item.produto.nome if hasattr(item, 'produto') else 'Produto',
-                    'descricao': getattr(item.produto, 'descricao', '') if hasattr(item, 'produto') else ''
+                    'id': item_pedido.produto.id,
+                    'nome': item_pedido.produto.name,
+                    'descricao': getattr(item_pedido.produto, 'description', '')
                 },
-                'quantidade': getattr(item, 'quantidade', 1),
-                'price': float(getattr(item, 'price', 0)),
-                'subtotal': float(getattr(item, 'subtotal', getattr(item, 'price', 0) * getattr(item, 'quantidade', 1)))
+                'quantidade': item_pedido.quantidade,
+                'price': float(item_pedido.unit_price),
+                'subtotal': float(item_pedido.subtotal)
             })
         
         checkout_data = {
             'pedido': {
                 'id': pedido.id,
                 'items': pedido_items,
-                'total_price': float(getattr(pedido, 'total_price', 0)),
+                'total_price': float(pedido.total_price),
                 'status': pedido.status
             },
             'client': ClienteService.get_client_summary(client),
@@ -92,19 +94,28 @@ def status_view(request, pedido_id):
     client = request.client
     pedido = get_object_or_404(Pedido, id=pedido_id, cliente=client)
     
+    # Construir dados dos itens corretamente usando a mesma estrutura do checkout
+    items_data = []
+    for item_pedido in pedido.itempedido_set.select_related('produto').all():
+        items_data.append({
+            'id': item_pedido.id,
+            'produto_id': item_pedido.produto.id,
+            'produto': {
+                'id': item_pedido.produto.id,
+                'nome': item_pedido.produto.name
+            },
+            'quantidade': item_pedido.quantidade,
+            'price': float(item_pedido.unit_price),
+            'subtotal': float(item_pedido.subtotal)
+        })
+    
     status_data = {
         'pedido': {
             'id': pedido.id,
             'status': pedido.status,
             'created_at': pedido.created_at.isoformat() if hasattr(pedido, 'created_at') else None,
             'estimated_delivery': getattr(pedido, 'estimated_delivery', None),
-            'items': [
-                {
-                    'produto': {'nome': item.produto.nome if hasattr(item, 'produto') else 'Produto'},
-                    'quantity': getattr(item, 'quantity', 1),
-                    'price': float(getattr(item, 'price', 0))
-                } for item in pedido.items.all()
-            ],
+            'items': items_data,
             'total_price': float(getattr(pedido, 'total_price', 0)),
             'delivery_address': getattr(pedido, 'delivery_address', None)
         },
