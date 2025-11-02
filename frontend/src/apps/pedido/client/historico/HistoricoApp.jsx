@@ -65,7 +65,7 @@ const HistoricoApp = ({ historicoData, csrfToken }) => {
           <h3>📋 Nenhum pedido encontrado</h3>
           <p>Você ainda não fez nenhum pedido.</p>
           <button 
-            onClick={() => window.location.href = '/cardapio/'}
+            onClick={() => window.location.href = '/produtos/'}
             className="btn-new-order"
           >
             🛒 Fazer Primeiro Pedido
@@ -146,7 +146,7 @@ const HistoricoApp = ({ historicoData, csrfToken }) => {
 
               <div className="pedido-actions">
                 <button 
-                  onClick={() => window.location.href = `/pedido/${pedido.id}/status/`}
+                  onClick={() => window.location.href = `/pedidos/${pedido.id}/status/`}
                   className="btn-view-details"
                 >
                   👁️ Ver Detalhes
@@ -172,7 +172,7 @@ const HistoricoApp = ({ historicoData, csrfToken }) => {
       <div className="historico-footer">
         <p>Mostrando {pedidosFiltrados.length} de {pedidos.length} pedidos</p>
         <button 
-          onClick={() => window.location.href = '/cardapio/'}
+          onClick={() => window.location.href = '/produtos/'}
           className="btn-new-order-footer"
         >
           🛒 Fazer Novo Pedido

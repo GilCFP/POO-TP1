@@ -157,7 +157,7 @@ class ApiService {
 
   produto = {
     getCardapio: (params = {}) => 
-      this.get(`/produto/cardapio/?${new URLSearchParams(params)}`),
+      this.get(`/produto/?${new URLSearchParams(params)}`),
     
     getDetalhes: (produtoId) => 
       this.get(`/produto/${produtoId}/`),
@@ -248,7 +248,9 @@ export const AuthUtils = {
   // Verifica se cliente está logado
   isAuthenticated: () => {
     const clientData = AuthUtils.getClientData();
-    return clientData && clientData.success;
+    const isAuth = clientData && clientData.success;
+    console.log('AuthUtils.isAuthenticated - Check:', { clientData, isAuth });
+    return isAuth;
   },
   
   // Obtém informações do cliente atual

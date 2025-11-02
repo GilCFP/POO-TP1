@@ -44,12 +44,28 @@ const ProdutoApp = () => {
 
     const handleViewCarrinho = (pedidoAtivo) => {
         // Redirecionar para página de checkout
-        window.location.href = '/pedido/checkout/';
+        window.location.href = '/pedidos/checkout/';
     };
 
     return (
         <CarrinhoProvider csrfToken={csrfToken}>
             <div className="product-container">
+                {/* DEBUG: Sempre mostrar esta caixa para verificar se o React está funcionando */}
+                <div style={{
+                    position: 'fixed',
+                    top: '20px',
+                    right: '20px',
+                    background: 'lime',
+                    padding: '10px',
+                    border: '2px solid green',
+                    borderRadius: '5px',
+                    zIndex: 9999
+                }}>
+                    <p>✅ ProdutoApp Carregado!</p>
+                    <p>Produtos: {produtos.length}</p>
+                    <p>CSRF: {csrfToken ? '✓' : '✗'}</p>
+                </div>
+                
                 <h1>Nossos Produtos</h1>
                 {produtos.length > 0 ? (
                     <div className="product-grid">

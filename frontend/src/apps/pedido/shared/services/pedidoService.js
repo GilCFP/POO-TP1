@@ -52,14 +52,20 @@ class PedidoService {
    */
   async removerItem(pedidoId, produtoId, csrfToken) {
     try {
+      const payload = {
+        pedido_id: pedidoId,
+        produto_id: produtoId
+      };
+      
+      console.log('pedidoService.removerItem:', payload);
+      
       const response = await apiService.post(
         `${this.baseUrl}/item/remover/`,
-        {
-          pedido_id: pedidoId,
-          produto_id: produtoId
-        },
+        payload,
         csrfToken
       );
+      
+      console.log('Resposta do servidor (remover):', response);
       return response;
     } catch (error) {
       console.error('Erro ao remover item:', error);
@@ -72,15 +78,21 @@ class PedidoService {
    */
   async atualizarQuantidadeItem(pedidoId, produtoId, quantidade, csrfToken) {
     try {
+      const payload = {
+        pedido_id: pedidoId,
+        produto_id: produtoId,
+        quantidade: quantidade
+      };
+      
+      console.log('pedidoService.atualizarQuantidadeItem:', payload);
+      
       const response = await apiService.post(
         `${this.baseUrl}/item/atualizar-quantidade/`,
-        {
-          pedido_id: pedidoId,
-          produto_id: produtoId,
-          quantidade: quantidade
-        },
+        payload,
         csrfToken
       );
+      
+      console.log('Resposta do servidor:', response);
       return response;
     } catch (error) {
       console.error('Erro ao atualizar quantidade:', error);
@@ -177,12 +189,21 @@ class PedidoService {
    */
   async obterPedidoAtivo() {
     try {
+      console.log('PedidoService.obterPedidoAtivo - Iniciando...');
       const response = await this.listarPedidosCliente('0');
+      console.log('PedidoService.obterPedidoAtivo - Resposta listar:', response);
+      
       if (response.success && response.pedidos && response.pedidos.length > 0) {
         // Retorna o primeiro pedido ativo encontrado
         const pedidoAtivo = response.pedidos[0];
-        return await this.obterPedido(pedidoAtivo.id);
+        console.log('PedidoService.obterPedidoAtivo - Pedido encontrado:', pedidoAtivo);
+        
+        const pedidoDetalhado = await this.obterPedido(pedidoAtivo.id);
+        console.log('PedidoService.obterPedidoAtivo - Pedido detalhado:', pedidoDetalhado);
+        
+        return pedidoDetalhado;
       }
+      console.log('PedidoService.obterPedidoAtivo - Nenhum pedido ativo encontrado');
       return null;
     } catch (error) {
       console.error('Erro ao obter pedido ativo:', error);

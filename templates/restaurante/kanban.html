@@ -436,12 +436,20 @@
                 <span style="font-size: 1.2em;">🍳</span>
                 Pedidos da Cozinha
             </h2>
-            {% if cozinha_info %}
-            <div class="badge bg-info" style="display: flex; align-items: center; gap: 8px;">
-                <span>⚡</span>
-                Capacidade: {{ cozinha_info.capacidade_atual }}/{{ cozinha_info.capacidade_total }}
+            <div style="display: flex; align-items: center; gap: 12px;">
+                {% if cozinha_info %}
+                <div class="badge bg-info" style="display: flex; align-items: center; gap: 8px;">
+                    <span>⚡</span>
+                    Capacidade: {{ cozinha_info.capacidade_atual }}/{{ cozinha_info.capacidade_total }}
+                </div>
+                {% endif %}
+                <a href="{% url 'restaurante:dashboard' %}" 
+                   class="btn btn-outline-primary" 
+                   style="display: flex; align-items: center; gap: 8px; text-decoration: none; border-radius: 8px;">
+                    <span>📊</span>
+                    Dashboard
+                </a>
             </div>
-            {% endif %}
         </div>
         
         <!-- Kanban Board -->
