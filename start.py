@@ -22,17 +22,27 @@ def main():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     frontend_dir = os.path.join(base_dir, "frontend")
     
-    print("\n[1/3] Executando build do frontend...")
+    print("\n[1/4] Executando build do frontend...")
     if not run_command("npm run build:dev", cwd=frontend_dir):
         print("Falha no build do frontend!")
         sys.exit(1)
     
-    print("\n[2/3] Iniciando servidor Django...")
+    print("\n[2/4] Aplicando migrações do banco de dados...")
+    if not run_command("python manage.py migrate", cwd=base_dir):
+        print("Falha ao aplicar as migrações do banco de dados!")
+        sys.exit(1)
+
+    print("\n[3/4] Populando o banco de dados com dados de teste...")
+    if not run_command("python manage.py populate_db --clear-existing --full --verbose", cwd=base_dir):
+        print("Falha ao popular o banco de dados!")
+        sys.exit(1)
+
+    print("\n[4/4] Iniciando servidor Django...")
     if not run_command("python manage.py runserver", cwd=base_dir):
         print("Falha ao iniciar o servidor Django!")
         sys.exit(1)
     
-    print("\n" + "=" * 40)
+    print("\n[4/4] " + "=" * 40)
     print("Projeto iniciado com sucesso!")
     print("=" * 40)
 
