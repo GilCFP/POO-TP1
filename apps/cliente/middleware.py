@@ -80,7 +80,8 @@ class ClienteAuthMiddleware(MiddlewareMixin):
             else:
                 # Para páginas HTML, redireciona para login
                 from django.shortcuts import redirect
-                return redirect('/login/')  # Implementar página de login
+                # quero redirecionar para http://127.0.0.1:8000/clientes/login/
+                return redirect('/clientes/login/')  # Implementar página de login
         
         return None
 
