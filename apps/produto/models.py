@@ -76,15 +76,6 @@ class Alimento(Produto):
         verbose_name="É um ingrediente?",
         help_text="Marque se este alimento pode ser usado como ingrediente em outros."
     )
-    # TODO: Implementar ingredientes adicionais em versão futura
-    # additional_ingredients = models.ManyToManyField(
-    #     'self',
-    #     blank=True,
-    #     symmetrical=False,
-    #     verbose_name="Ingredientes Adicionais",
-    #     limit_choices_to={'is_ingredient': True},
-    #     related_name="used_in_foods"
-    # )
 
     def is_expired(self):
         """Verifica se o alimento está vencido."""

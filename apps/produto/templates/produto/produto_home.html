@@ -26,6 +26,9 @@
 {% block extra_js %}
     {# Carrega o bundle de bibliotecas compartilhadas (vendor) primeiro #}
     <script src="{% static 'shared/client/vendor.bundle.js' %}"></script>
+    <script src="{% static 'shared/components.bundle.js' %}"></script>
+
     {# Em seguida, carrega o bundle específico da página do cardápio (já inclui os componentes) #}
     <script src="{% static 'produto/client/cardapio.bundle.js' %}"></script>
+
 {% endblock %}
